@@ -10,16 +10,15 @@ import imutils
 import numpy as np
 import cv2
 from base64 import b64decode
-#from google.colab.patches import cv2_imshow
-#from IPython.display import display, Javascript
-#from google.colab.output import eval_js
+import os
 
 
 class FaceDetector:
     
     def __init__(self):
-        prototxt = 'converter/face_model/deploy.prototxt'
-        model = 'converter/face_model/res10_300x300_ssd_iter_140000.caffemodel'
+        print(os.getcwd())
+        prototxt = 'bubbleLibrary/face_model/deploy.prototxt'
+        model = 'bubbleLibrary/face_model/res10_300x300_ssd_iter_140000.caffemodel'
         self.net = cv2.dnn.readNetFromCaffe(prototxt, model)
 
 

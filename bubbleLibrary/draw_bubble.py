@@ -5,7 +5,7 @@ Created on Wed Nov  3 19:22:31 2021
 @author: josse
 """
 
-from converter.utils_cv2 import rounded_rectangle, dist
+from bubbleLibrary.utils_cv2 import rounded_rectangle, dist
 import numpy as np
 import cv2
 

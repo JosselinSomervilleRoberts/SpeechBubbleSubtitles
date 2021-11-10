@@ -1,0 +1,4 @@
+ass==0.5.2
+converter==1.0.0
+imutils==0.5.4
+numpy==1.21.4
