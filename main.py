@@ -5,9 +5,9 @@ Created on Wed Nov  3 13:33:59 2021
 @author: josse
 """
 
-from converter.read_files import read_both
-from converter.face_detection import FaceDetector
-from converter.draw_bubble import draw_bubble_text
+from bubbleLibrary import read_both
+from bubbleLibrary import FaceDetector
+from bubbleLibrary import draw_bubble_text
 
 
 data = read_both("data/video.mp4", "data/video.ass")
