@@ -141,13 +141,15 @@ class Face:
         center = self.getMouthPos(frame_index)
         axes = (10,5)
         angle = 360
-        cv2.ellipse(frame, center, axes, angle, 0 , 360, (255,0,0), 2)
         text = "Unknown"
         if not(self.name is None): text = self.name
+        color = (255, 0, 0)
+        if self.landmarks.speaking.get(frame_index): color = (0,0,255)
         
-        # setup text
+        # Draw
+        cv2.ellipse(frame, center, axes, angle, 0 , 360, color, 2)
         cv2.putText(frame, text, (-len(text) * 5 + center[0], 20 + center[1]),
-        			cv2.FONT_HERSHEY_SIMPLEX, 0.45, (255, 0, 0), 2)
+        			cv2.FONT_HERSHEY_SIMPLEX, 0.45, color, 2)
 
 
     
