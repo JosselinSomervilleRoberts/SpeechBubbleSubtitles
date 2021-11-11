@@ -9,6 +9,7 @@ from bubbleLibrary.utils_cv2 import rounded_rectangle, dist
 import numpy as np
 import cv2
 
+
 def draw_bubble_text(frame, center, width, height, attach):
     
     top_left     = (center[0] - int(width/2.), center[1] - int(height/2.))
