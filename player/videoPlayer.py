@@ -40,8 +40,6 @@ mp_face_mesh = mp.solutions.face_mesh
 
 
 
-def process_frame_default(frame, t):
-    return frame, t
 
 
 
@@ -59,11 +57,11 @@ class VideoPlayer:
     
     MIN_SECONDS_LOADED = 5
     PENDING_MAX = 250
-    MAX_THREADS_NUMBER = 2
+    MAX_THREADS_NUMBER = 1
     TIME_AVERAGE_FRAME = 2
     
     
-    def __init__(self, video_path):
+    def __init__(self, video_path, pool):
         # Video data
         self.video_path = video_path
         self.cap = video.create_capture(self.video_path)
@@ -72,10 +70,9 @@ class VideoPlayer:
         # Used to process frames
         self.threaded_mode = True
         self.nb_of_threads = min(VideoPlayer.MAX_THREADS_NUMBER, cv.getNumberOfCPUs())
-        self.pool = ThreadPool(processes = self.nb_of_threads)
+        self.pool = pool
         self.pending = deque()
         self.processing = deque()
-        self.process_frame_function = process_frame_default
         
         # Metrics
         self.time_stamps_for_fps = []
@@ -90,8 +87,17 @@ class VideoPlayer:
         
         
         
+    def process_frame(self, frame, t):
+        return frame, t
+        
+        
+        
     def play(self):
+        frame_index_processed = 0
+        
         while True:
+            
+            print(len(self.pending), "/", len(self.processing))
             
             # On met à jour l'état des frames
             while len(self.processing) > 0 and self.processing[0].ready():
@@ -115,7 +121,7 @@ class VideoPlayer:
                         self.actual_fps_count -= 1
                     
                     # Affichage de l'image avec les infos
-                    res, t0 = self.pending.popleft().get()
+                    res, f_index = self.pending.popleft().get()
                     draw_str(res, (20, 20), "threaded      :  " + str(self.threaded_mode))
                     draw_str(res, (20, 40), "FPS            :  %.1f " % (self.actual_fps_count / VideoPlayer.TIME_AVERAGE_FRAME))
                     draw_str(res, (20, 60), "Pending        :  %.1f " % (len(self.pending)))
@@ -137,13 +143,13 @@ class VideoPlayer:
                 
             if len(self.processing) < self.nb_of_threads and len(self.pending) <= VideoPlayer.PENDING_MAX:
                 _ret, frame = self.cap.read()
-                t = clock()
                 task = None
                 if self.threaded_mode:
-                    task = self.pool.apply_async(self.process_frame_function, (frame.copy(), t))
+                    task = self.pool.apply_async(self.process_frame, (frame.copy(), frame_index_processed))
                 else:
-                    task = DummyTask(self.process_frame_function(frame, t))
+                    task = DummyTask(self.process_frame(frame, frame_index_processed))
                 self.processing.append(task)
+                frame_index_processed += 1
                 
             ch = cv.waitKey(1)
             if ch == ord(' '):

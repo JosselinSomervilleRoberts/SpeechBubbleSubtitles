@@ -1,11 +1,8 @@
-# -*- coding: utf-8 -*-
-"""
-Created on Thu Nov 11 16:05:06 2021
-
-@author: josse
-"""
+from multiprocessing.pool import ThreadPool
 
 from player.videoPlayerWithBubbles import VideoPlayerWithBubbles as Player
 
-vid_play = Player("data/video.mp4", "data/video.ass")
-vid_play.play()
+if __name__ == '__main__':
+    pool = ThreadPool(processes = 2)
+    vid_play = Player("data/video.mp4", "data/video.ass", pool)
+    vid_play.play()
