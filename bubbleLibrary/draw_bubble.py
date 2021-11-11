@@ -11,6 +11,13 @@ import cv2
 
 
 def draw_bubble_text(frame, center, width, height, attach):
+    """
+    input:
+        frame: opencv image
+        center: center of the bubble (tuple of ints)
+        width, height: width and height of the bubble
+        attach: position of the end of the bubble tail (tuple)
+    """
     
     top_left     = (center[0] - int(width/2.), center[1] - int(height/2.))
     bottom_right = (center[0] + int(width/2.), center[1] + int(height/2.))
