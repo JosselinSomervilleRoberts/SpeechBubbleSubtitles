@@ -1,6 +1,8 @@
 from player.videoPlayer import VideoPlayer
 from player.recognizer.face import Face
 from bubbleLibrary import FacesDetector
+from bubbleLibrary.utils_cv2 import dist
+from player.recognizer.interpolable import Interpolable
 
 from math import sqrt
 import numpy as np
@@ -30,7 +32,9 @@ import face_recognition
 detector = FacesDetector()
 #detector.addKnownFace("data/josselin.jpg", "Josselin")
 #detector.addKnownFace("data/jake.jpg", "jake")
-detector.addKnownFace("data/jake2.JPG", "jake")
+for i in range(12):
+    print("loading:", "data/jake/" + str(i) + ".jpg", "jake")
+    detector.addKnownFace("data/jake/" + str(i) + ".jpg", "jake")
 dist_max_recognition = 0.55 # Distance below which we assume the recognition is correct
 
 
@@ -64,17 +68,16 @@ def getBoxFromLandmark(landmark, frame_width, frame_height):
 def recognize(frame, box, face, f_index):
     # Find who
     if True:
-        print("RECOGNIZE")
-        enlarge_coef = 1.6
+        enlarge_coef = 2.0
         new_cx_min = max(0, int(box[0] - 0.5 * enlarge_coef * box[2]))
         new_cy_min = max(0, int(box[1] - 0.5 * enlarge_coef * box[3]))
         new_cx_max = int(box[0] + 0.5 * enlarge_coef * box[2])
         new_cy_max = int(box[1] + 0.5 * enlarge_coef * box[3])
         cropped = frame[new_cy_min:new_cy_max, new_cx_min:new_cx_max]
-        small_frame = cv2.resize(cropped, (0, 0), fx=0.5, fy=0.5)
+        #small_frame = cv2.resize(cropped, (0, 0), fx=0.5, fy=0.5)
         
         # Convert the image from BGR color (which OpenCV uses) to RGB color (which face_recognition uses)
-        rgb_small_frame = small_frame[:, :, ::-1]
+        rgb_small_frame = cropped[:, :, ::-1]
         face_locations = face_recognition.face_locations(rgb_small_frame)
         list_encodings = face_recognition.face_encodings(rgb_small_frame, face_locations, num_jitters=1, model="small")
         
@@ -104,15 +107,32 @@ def recognize(frame, box, face, f_index):
 
 
 
-
 class VideoPlayerWithBubbles(VideoPlayer):
     
-    SIMILIRATY_THRESHOLD = 0.4
-    REFRESH_RECOGNITION = 10
-    THRESHOLD_TIMES_MISSED_ALLOWED_MAX = 3
+    # similarity required to consider that two faces are the same
+    SIMILIRATY_THRESHOLD = 0.5 # between 0 (completly different) and 1 (exact same place and size)
+
+    # How often we run the recognition function
+    REFRESH_RECOGNITION = 10 # frames
+
+    # Used to clean up the cases in finish_process
+    MAXIMUM_NUMBER_OF_FRAMES_TO_JOIN_KNOWN_FACES = 8
+    MAXIMUM_NUMBER_OF_FRAMES_TO_JOIN_UNKNOWN_FACES = 4
+    MAXIMUM_DISTANCE_TO_JOIN_UNKNOWN_FACES = 0.04
+    FACE_NOT_APPEARED_MAX_NUMBER_FRAMES = 5
+    FACE_MINIMUM_APPEARED_NUMBER_FRAMES = 10
+
+    # How often we run finish_process
+    REFRESH_FINISH_PROCESS = 5 # frames
+    DELAY_FINISH_PROCESS = 20  # frames
     
-    def __init__(self, video_path, subtitle_path, pool):
-        VideoPlayer.__init__(self, video_path, pool)
+
+    def __init__(self, video_path, subtitle_path):
+        VideoPlayer.__init__(self, video_path)
+
+        # Global parameters transmission
+        # TODO: Fix this
+        # Interpolable.MAX_INTERPOLATION_INTERVAL = VideoPlayer.MAXIMUM_NUMBER_OF_FRAMES_TO_JOIN_KNOWN_FACES + 1
         
         # Video data
         self.subtitle_path = subtitle_path
@@ -128,11 +148,15 @@ class VideoPlayerWithBubbles(VideoPlayer):
         
         # Face mesh and landmarks
         self.faces = []
+        self.face_data  = []
         self.face_mesh = mp_face_mesh.FaceMesh(
                             max_num_faces=3,
                             refine_landmarks=True,
                             min_detection_confidence=0.5,
                             min_tracking_confidence=0.5)
+
+
+
         
         
         
@@ -140,7 +164,7 @@ class VideoPlayerWithBubbles(VideoPlayer):
         # To improve performance, optionally mark the image as not writeable to
         # pass by reference.
         frame.flags.writeable = False
-        frame= cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+        frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
         results = self.face_mesh.process(frame)
         
         # Draw the face mesh annotations on the image.
@@ -180,8 +204,6 @@ class VideoPlayerWithBubbles(VideoPlayer):
     
     
     def process_frame(self, frame, frame_index):
-        
-        print("faces =", len(self.faces))
         
         # We have never loaded the general frame infos
         if self.frame_width is None:
@@ -265,18 +287,118 @@ class VideoPlayerWithBubbles(VideoPlayer):
             index = 0
             while index < len(self.faces):
                 face = self.faces[index]
-                incrementIndex = True
-                if face.last_frame_update < frame_index:
-                    face.nb_times_missed += 1
-                    
-                    if face.nb_times_missed >= VideoPlayerWithBubbles.THRESHOLD_TIMES_MISSED_ALLOWED_MAX:
-                        self.faces.pop(index)
-                        incrementIndex = False
-                        
-                if incrementIndex: index += 1
+                keep, delete = face.checkState(frame_index)
+
+                if not(keep):
+                    self.faces.pop(index)
+                else:
+                    index +=1
             """
-    
-            for face in self.faces:
-                face.draw(frame, frame_index)
-                
-        return frame, frame_index
+
+        # Every so often, we cleanup the faces array
+        if (frame_index > VideoPlayerWithBubbles.DELAY_FINISH_PROCESS) and (frame_index % VideoPlayerWithBubbles.REFRESH_FINISH_PROCESS == 0):
+            self.finish_process(frame_index - VideoPlayerWithBubbles.DELAY_FINISH_PROCESS)
+
+
+    def finish_process(self, frame_index):
+        """
+        This function postprocesses the array self.faces.
+        It looks for faces no longer active at the time of frame_index (meaning they
+        have not been detected for at least VideoPlayerWithBubbles.FACE_NOT_APPEARED_MAX_NUMBER_FRAMES)
+        These faces are tested on several aspects :
+        - if they are named, we check for faces with the same name to see if we can merge the 2,
+        or unnamed face that are close to merge the 2
+        - if they are unnamed, we look for any faces (named or not) that were close to merge the 2
+        - if even after merging a face only appears for a very short period, then we delete it
+        TODO: Check for scene cuts before merging
+        """
+
+        face_index = 0
+        while face_index < len(self.faces):
+            face = self.faces[face_index]
+
+            # We will treat the faces no longer active
+            if frame_index - face.last_appearance > VideoPlayerWithBubbles.FACE_NOT_APPEARED_MAX_NUMBER_FRAMES:
+                # We see if we can merge it to an other face
+
+                # If the face has been identified, we will try to find a face with the same name
+                if not(face.name is None):
+
+                    face2_index = face_index + 1
+                    while face2_index < len(self.faces):
+                        removed = False
+                        face2 = self.faces[face2_index]
+
+                        if face2.name == face.name: # Deux faces sont le meme personnage
+
+                            if face2.first_appearance <= face.last_appearance: # On a 2 fois le meme personnage en meme temps, ca ne va pas
+                                face2.name = None
+                            else:
+                                # TODO: verifier qu'il n'y a pas de cut
+                                if face.last_appearance - face2.first_appearance <= VideoPlayerWithBubbles.MAXIMUM_NUMBER_OF_FRAMES_TO_JOIN_KNOWN_FACES: 
+                                    # Il y a peu de temps qui s ecoule entre les deux, donc on va reunir les deux faces
+                                    face.merge(face2)
+                                    self.faces.pop(face2_index)
+                                    removed = True
+
+                        if not(removed): face2_index += 1
+
+
+                # If the face has not been identified, then we look for a face that has been identified close to this one
+                # to see if we can merge the two, in order to identify the current face
+                # We also look for unidentified face like that we can have powerful merge in chains
+                else: # Unidentified face
+                    lastPos = face.getLastKnownPos()
+
+                    face2_index = face_index + 1
+                    while face2_index < len(self.faces):
+                        removed = False
+                        face2 = self.faces[face2_index]
+
+                        # TODO: verifier qu'il n'y a pas de cut
+                        if face2.first_appearance - face.last_appearance <= VideoPlayerWithBubbles.MAXIMUM_NUMBER_OF_FRAMES_TO_JOIN_UNKNOWN_FACES:
+                            # Il y a peu de temps qui s ecoule entre les deux, on va donc vérifier si les faces sont proches
+                            distance = dist(lastPos, face2.getFirstKnownPos()) / self.frame_normalizer
+                            if distance <= VideoPlayerWithBubbles.MAXIMUM_DISTANCE_TO_JOIN_UNKNOWN_FACES:
+                                face.merge(face2)
+                                self.faces.pop(face2_index)
+                                removed = True
+
+                        if not(removed): face2_index += 1
+
+
+                # Finally, now that we have checked if the face could be merged,
+                # We check its duration and if it is too short, we consider this detection
+                # as an error and remove the face
+                if face.last_appearance - face.first_appearance < VideoPlayerWithBubbles.FACE_MINIMUM_APPEARED_NUMBER_FRAMES:
+                    self.faces.pop(face_index)
+                else:
+                    # We did not remove the face, so we check the next one
+                    face_index += 1
+            else:
+                # The face is still active, we go to the next one
+                face_index += 1
+
+
+    def prepare_display(self):
+        """This function replaces the variable self.current_frame using the video for display (self.cap_display)
+        and the information processed (self.pending[0])"""
+
+        # Read the frame from video file
+        VideoPlayer.prepare_display(self)
+
+        face_index = 0
+        while face_index < len(self.faces):
+            face = self.faces[face_index]
+            removed = False
+
+            if face.isPresent(self.current_frame_index):
+                face.draw(self.current_frame, self.current_frame_index)
+            else:
+                if self.current_frame_index > face.last_appearance: # La tete n'apparaitra plus
+                    # On verifie juste qu'on n'en aura pas besoin pour le finish_process
+                    if self.current_frame_index + len(self.pending) - face.last_appearance > VideoPlayerWithBubbles.DELAY_FINISH_PROCESS + VideoPlayerWithBubbles.REFRESH_FINISH_PROCESS:
+                        self.faces.pop(face_index)
+                        removed = True
+
+            if not(removed): face_index += 1

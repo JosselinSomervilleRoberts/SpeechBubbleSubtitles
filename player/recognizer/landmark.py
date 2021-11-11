@@ -60,3 +60,10 @@ class Landmark:
         while  (len(self.indexes) > 0) and self.indexes[0] < frame_index:
              self.indexes.pop(0)
              self.values.pop(0)
+
+
+
+    def merge(self, other):
+        self.mouth.merge(other.mouth)
+        self.indexes.extend(other.indexes)
+        self.values.extend(other.values)

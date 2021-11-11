@@ -13,15 +13,24 @@ mp_face_mesh = mp.solutions.face_mesh
 
 
 class Face:
+
+    global_id_counter = 0
+
     frame_width  = 0
     frame_height = 0
     frame_normalizer = 0
+
+    NOT_APPEARED_MAX_NUMBER_FRAMES = 10
+    MINIMUM_APPEARED_NUMBER_FRAMES = 10
     
     def __init__(self):
         
         # Character info
+        self.id = Face.global_id_counter
+        Face.global_id_counter += 1
         self.name = None             # String: name of the character
-        self.nb_times_missed = 0     # Number of times in a row, this character was not found via recognition
+        self.first_appearance = None
+        self.last_appearance  = None
         
         # Position
         self.center = Position()   # x coordinate of the center of the head bounding box
@@ -29,12 +38,17 @@ class Face:
         self.h = Interpolable()   # height of the head bounding box
         self.landmarks = Landmark()
         
+
+
+    def isPresent(self, frame_index):
+        return (self.first_appearance <= frame_index <= self.last_appearance)
         
+
         
     def detected(self, box, landmarks, frame_index):
         # Note that we recognised this character
-        self.nb_times_missed = 0
-        self.last_frame_update = frame_index
+        if self.first_appearance is None: self.first_appearance = frame_index
+        self.last_appearance = frame_index
         
         # Update postion
         self.center.add( (box[0], box[1]), frame_index )
@@ -79,7 +93,7 @@ class Face:
             # Compute the ratio of area change (between 0 and 1)
             # The max(1, ...) is a way to avoid dividing by zero
             area_ratio = min(max(1, area) / max(1, expected_area), max(1, expected_area) / max(1, area)) 
-            #☺print("area_ratio =", area_ratio)
+            #print("area_ratio =", area_ratio)
             #print("area =", area)
             #print("expected_area =", expected_area)
             
@@ -134,4 +148,50 @@ class Face:
         # setup text
         cv2.putText(frame, text, (-len(text) * 5 + center[0], 20 + center[1]),
         			cv2.FONT_HERSHEY_SIMPLEX, 0.45, (255, 0, 0), 2)
+
+
+    
+    def merge(self, other_face):
+        if self.name is None: self.name = other_face.name
+        self.last_appearance = other_face.last_appearance
+
+        # Merging positions array
+        self.center.merge(other_face.center)
+        self.w.merge(other_face.w)
+        self.h.merge(other_face.h)
+        self.landmarks.merge(other_face.landmarks)
+
         
+    def getLastKnownPos(self):
+        return self.center.get(self.last_appearance)
+
+
+    def getFirstKnownPos(self):
+        return self.center.get(self.first_appearance)
+
+    
+    def checkState(self, frame_index):
+        """Returns if the face is still active and if it should be destroyed (it was an outlier)"""
+
+        # Check if the face is still alive
+        if self.last_appearance is None: return False, True
+        if frame_index - self.last_appearance > Face.NOT_APPEARED_MAX_NUMBER_FRAMES:
+            # The face has not appeared for too many frames
+
+            # If the face was only detected for a very short time period, then it must be an error in the detection
+            if self.last_appearance - self.first_appearance < Face.MINIMUM_APPEARED_NUMBER_FRAMES:
+                return False, True
+            
+            # The face is no longer active but was present long enough so the detection must be right
+            return False, False
+
+        # The face is active, we keep it
+        return True, False
+
+    
+    def cleanup(self, frame_index):
+        """Cleanup data no longer used to optimize the performance"""
+        self.center.cleanup(frame_index)
+        self.w.cleanup(frame_index)
+        self.h.cleanup(frame_index)
+        self.landmarks.cleanup(frame_index)

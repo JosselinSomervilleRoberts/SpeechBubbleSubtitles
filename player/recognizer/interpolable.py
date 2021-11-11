@@ -3,6 +3,8 @@ from math import factorial
 
 
 class Interpolable:
+
+    MAX_INTERPOLATION_INTERVAL = 9
     
     def __init__(self):
         self.values = [] # floats
@@ -82,18 +84,27 @@ class Interpolable:
             return self.values[value_index] # On renvoie la valeur exacte
         else: # On interpole
             if len(self.indexes) > value_index + 1: # On vérifie mais normalement inutile
-                return self.values[value_index] + (self.values[value_index+1] - self.values[value_index]) * (frame_index - self.indexes[value_index]) / float(self.indexes[value_index+1] - self.indexes[value_index])
+                
+                if self.indexes[value_index+1] - self.indexes[value_index] > Interpolable.MAX_INTERPOLATION_INTERVAL: # This should not happen, but because of a bug it does
+                    return -1
+                else:
+                    return self.values[value_index] + (self.values[value_index+1] - self.values[value_index]) * (frame_index - self.indexes[value_index]) / float(self.indexes[value_index+1] - self.indexes[value_index])
             else: # si on retrouve ici il y a un probleme mais ons ait jamais
                 print("WARNING: no available value for interpolation in Interpolable.get()")
                 return self.values[value_index] # On renvoie la valuer la plus proche
             
             
             
-        def cleanup(self, frame_index):
-            """Delete all the information on the frame previous to frame_index
-            We keep at least 4 values previous to frame_index for interpolation purposes
-            At the end, we have the first 3 indexes <= frame_index and the rest > frame_index"""
+    def cleanup(self, frame_index):
+        """Delete all the information on the frame previous to frame_index
+        We keep at least 4 values previous to frame_index for interpolation purposes
+        At the end, we have the first 3 indexes <= frame_index and the rest > frame_index"""
         self.mouth.cleanup(frame_index)
         while  (len(self.indexes) >= 4) and self.indexes[3] <= frame_index:
              self.indexes.pop(0)
              self.values.pop(0)
+
+
+    def merge(self, other):
+        self.indexes.extend(other.indexes)
+        self.values.extend(other.values)

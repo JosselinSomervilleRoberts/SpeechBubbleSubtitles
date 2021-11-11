@@ -21,3 +21,8 @@ class Position:
     def cleanup(self, frame_index):
         self.x.cleanup(frame_index)
         self.y.cleanup(frame_index)
+
+    
+    def merge(self, other):
+        self.x.merge(other.x)
+        self.y.merge(other.y)

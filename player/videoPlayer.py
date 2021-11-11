@@ -61,16 +61,18 @@ class VideoPlayer:
     TIME_AVERAGE_FRAME = 2
     
     
-    def __init__(self, video_path, pool):
+    def __init__(self, video_path):
         # Video data
         self.video_path = video_path
         self.cap = video.create_capture(self.video_path)
+        self.cap_display = video.create_capture(self.video_path)
+        self.current_frame_index = -1
         self.fps = self.cap.get(cv2.CAP_PROP_FPS)
         
         # Used to process frames
         self.threaded_mode = True
         self.nb_of_threads = min(VideoPlayer.MAX_THREADS_NUMBER, cv.getNumberOfCPUs())
-        self.pool = pool
+        self.pool = ThreadPool(processes = self.nb_of_threads)
         self.pending = deque()
         self.processing = deque()
         
@@ -78,7 +80,6 @@ class VideoPlayer:
         self.time_stamps_for_fps = []
         self.actual_fps_count = 0
         self.time_waiting = 0
-        self.frame_showed_index = 0
         
         # Used to display the frames
         self.playing = False
@@ -89,7 +90,23 @@ class VideoPlayer:
         
     def process_frame(self, frame, t):
         return frame, t
+
+
+    def display(self):
+        """Function used to render the frame, adding useful metrics"""
+        draw_str(self.current_frame, (20, 20), "threaded      :  " + str(self.threaded_mode))
+        draw_str(self.current_frame, (20, 40), "FPS            :  %.1f " % (self.actual_fps_count / VideoPlayer.TIME_AVERAGE_FRAME))
+        draw_str(self.current_frame, (20, 60), "Pending        :  %.1f " % (len(self.pending)))
+        draw_str(self.current_frame, (20, 80), "Processing     :  %.1f " % (len(self.processing)))
+        cv.imshow('threaded video', self.current_frame)
         
+
+    def prepare_display(self):
+        """This function replaces the variable self.current_frame using the video for display (self.cap_display)
+        and the information processed (self.pending[0])"""
+        _ret, self.current_frame = self.cap_display.read()
+        self.current_frame_index += 1
+        self.pending.popleft()
         
         
     def play(self):
@@ -97,7 +114,7 @@ class VideoPlayer:
         
         while True:
             
-            print(len(self.pending), "/", len(self.processing))
+            #print(len(self.pending), "/", len(self.processing))
             
             # On met à jour l'état des frames
             while len(self.processing) > 0 and self.processing[0].ready():
@@ -121,12 +138,8 @@ class VideoPlayer:
                         self.actual_fps_count -= 1
                     
                     # Affichage de l'image avec les infos
-                    res, f_index = self.pending.popleft().get()
-                    draw_str(res, (20, 20), "threaded      :  " + str(self.threaded_mode))
-                    draw_str(res, (20, 40), "FPS            :  %.1f " % (self.actual_fps_count / VideoPlayer.TIME_AVERAGE_FRAME))
-                    draw_str(res, (20, 60), "Pending        :  %.1f " % (len(self.pending)))
-                    draw_str(res, (20, 80), "Processing     :  %.1f " % (len(self.processing)))
-                    cv.imshow('threaded video', res)
+                    self.prepare_display()
+                    self.display()
                     
                     # On n'utilise pas last_frame = clock() car on risque d'accumuler de l'erreur ce qui baissera le FPS
                     # Si jamais on a vraiment un trop gros retard alors là on utilise clock pour ne pas forcer à affciher
