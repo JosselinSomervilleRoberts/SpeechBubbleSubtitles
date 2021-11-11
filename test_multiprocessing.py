@@ -6,6 +6,10 @@ Created on Thu Nov 11 01:07:37 2021
 """
 from multiprocessing import Pool
 import time
+import traceback
+import sys
+
+
 
 def sleep(duration, get_now=time.perf_counter):
     now = get_now()
@@ -15,8 +19,12 @@ def sleep(duration, get_now=time.perf_counter):
         
 
 def myfunc(x):
-    time.sleep(1)
-    return x
+    try:
+        x = x / 0
+        time.sleep(1)
+        return x
+    except Exception:
+        return traceback.format_exc()
  
 def mycallback(x):
      print('Callback for i = {}'.format(x))
