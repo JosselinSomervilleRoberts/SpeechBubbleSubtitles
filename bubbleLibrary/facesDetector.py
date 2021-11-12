@@ -29,6 +29,11 @@ class FacesDetector:
         encoding = face_recognition.face_encodings(image, model="small")[0]
         
         # Add the encoding to the recognition
+        self.addKnownFaceEncoding(encoding, name)
+        return encoding
+
+    def addKnownFaceEncoding(self, encoding, name):
+        # Add the encoding to the recognition
         self.known_face_encodings.append(encoding)
         self.known_face_names.append(name)
         

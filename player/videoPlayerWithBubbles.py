@@ -3,6 +3,7 @@ from player.recognizer.face import Face
 from bubbleLibrary import FacesDetector
 from bubbleLibrary.utils_cv2 import dist
 from player.recognizer.interpolable import Interpolable
+from player.recognizer.recognizer import Recognizer
 
 from math import sqrt
 import numpy as np
@@ -25,17 +26,11 @@ mp_face_mesh = mp.solutions.face_mesh
 
 
 
-import face_recognition
 
 
-# Faces detector
-detector = FacesDetector()
-#detector.addKnownFace("data/josselin.jpg", "Josselin")
-#detector.addKnownFace("data/jake.jpg", "jake")
-for i in range(12):
-    print("loading:", "data/jake/" + str(i) + ".jpg", "jake")
-    detector.addKnownFace("data/jake/" + str(i) + ".jpg", "jake")
-dist_max_recognition = 0.55 # Distance below which we assume the recognition is correct
+
+
+
 
 
 def getBoxFromLandmark(landmark, frame_width, frame_height):
@@ -62,37 +57,6 @@ def getBoxFromLandmark(landmark, frame_width, frame_height):
     x = int((cx_min + cx_max) / 2.)
     y = int((cy_min + cy_max) / 2.)
     return (x,y,w,h)
-
-
-
-def recognize(frame, box, face, f_index):
-    # Find who
-    if True:
-        enlarge_coef = 2.0
-        new_cx_min = max(0, int(box[0] - 0.5 * enlarge_coef * box[2]))
-        new_cy_min = max(0, int(box[1] - 0.5 * enlarge_coef * box[3]))
-        new_cx_max = int(box[0] + 0.5 * enlarge_coef * box[2])
-        new_cy_max = int(box[1] + 0.5 * enlarge_coef * box[3])
-        cropped = frame[new_cy_min:new_cy_max, new_cx_min:new_cx_max]
-        #small_frame = cv2.resize(cropped, (0, 0), fx=0.5, fy=0.5)
-        
-        # Convert the image from BGR color (which OpenCV uses) to RGB color (which face_recognition uses)
-        rgb_small_frame = cropped[:, :, ::-1]
-        face_locations = face_recognition.face_locations(rgb_small_frame)
-        list_encodings = face_recognition.face_encodings(rgb_small_frame, face_locations, num_jitters=1, model="small")
-        
-        if len(list_encodings) > 0:
-            unknown_face_encoding = list_encodings[0]
-            distances = face_recognition.face_distance(detector.known_face_encodings, unknown_face_encoding)
-            
-            index_min = np.argmin(distances)
-            min_distance = distances[index_min]
-                    
-            if min_distance < dist_max_recognition:
-                face.name = detector.known_face_names[index_min]
-    
-
-
 
 
 
@@ -127,7 +91,7 @@ class VideoPlayerWithBubbles(VideoPlayer):
     DELAY_FINISH_PROCESS = 20  # frames
     
 
-    def __init__(self, video_path, subtitle_path):
+    def __init__(self, video_path, subtitle_path, face_path):
         VideoPlayer.__init__(self, video_path)
 
         # Global parameters transmission
@@ -149,6 +113,7 @@ class VideoPlayerWithBubbles(VideoPlayer):
         # Face mesh and landmarks
         self.faces = []
         self.face_data  = []
+        self.recognizer = Recognizer(face_path)
         self.face_mesh = mp_face_mesh.FaceMesh(
                             max_num_faces=3,
                             refine_landmarks=True,
@@ -257,7 +222,7 @@ class VideoPlayerWithBubbles(VideoPlayer):
                         
                         # if the face is unidentified we try to recognize it every so often
                         if ((frame_index + index_max[0]) % VideoPlayerWithBubbles.REFRESH_RECOGNITION == 0) and self.faces[existing_index].name is None:
-                            recognize(frame, boxes[detected_index], self.faces[existing_index], frame_index)
+                            self.recognizer.recognize(frame, boxes[detected_index], self.faces[existing_index])
                             
                             
                         self.faces[existing_index].detected(boxes[detected_index],
@@ -278,7 +243,7 @@ class VideoPlayerWithBubbles(VideoPlayer):
             for index, box in enumerate(boxes):
                 new_face = Face()
                 new_face.detected(box, landmarks[index], frame_index)    
-                #recognize(frame, box, new_face, frame_index)
+                #self.recognizer.recognize(frame, box, new_face)
                 self.faces.append(new_face)
                 
             
