@@ -144,7 +144,7 @@ class Face:
         text = "Unknown"
         if not(self.name is None): text = self.name
         color = (255, 0, 0)
-        if self.landmarks.speaking.get(frame_index): color = (0,0,255)
+        if self.landmarks.speaking.get(frame_index, average_nb = 21) > 0.15: color = (0,0,255)
         
         # Draw
         cv2.ellipse(frame, center, axes, angle, 0 , 360, color, 2)

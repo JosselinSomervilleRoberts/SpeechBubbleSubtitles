@@ -18,7 +18,7 @@ class Interpolable:
         
         
         
-    def get(self, frame_index):
+    def get(self, frame_index, average_nb=9):
         
         # S'il n'y a pas de valeurs
         if len(self.values) == 0:
@@ -81,7 +81,18 @@ class Interpolable:
             
         # Si on a la valeur exacte
         if self.indexes[value_index] == frame_index:
-            return self.values[value_index] # On renvoie la valeur exacte
+            demi_fenetre = int((average_nb -1) / 2.)
+
+            sum_coef = 0
+            sum_value = 0
+            for index in range(max(0, value_index - demi_fenetre), min(len(self.indexes), value_index + demi_fenetre + 1)):
+                coef = 1. / (1. + abs(self.indexes[index] - frame_index))
+                sum_coef  += coef
+                sum_value += coef * self.values[index]
+
+            value = sum_value / sum_coef
+            return value # On renvoie la moyenne
+
         else: # On interpole
             if len(self.indexes) > value_index + 1: # On vérifie mais normalement inutile
                 
