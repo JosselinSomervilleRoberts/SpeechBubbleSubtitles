@@ -15,28 +15,15 @@ Keyboard shortcuts:
    space - switch between multi and single threaded processing
 '''
 
-# Python 2/3 compatibility
-from __future__ import print_function
+
 
 import numpy as np
 import cv2 as cv
-
 from multiprocessing.pool import ThreadPool
 from collections import deque
 
-from player.common import clock, draw_str, StatValue
+from player.common import clock, draw_str
 import player.video as video
-import time
-
-
-
-
-# FACE LANDMARKS
-import cv2
-import mediapipe as mp
-mp_drawing = mp.solutions.drawing_utils
-mp_drawing_styles = mp.solutions.drawing_styles
-mp_face_mesh = mp.solutions.face_mesh
 
 
 
@@ -67,7 +54,7 @@ class VideoPlayer:
         self.cap = video.create_capture(self.video_path)
         self.cap_display = video.create_capture(self.video_path)
         self.current_frame_index = -1
-        self.fps = self.cap.get(cv2.CAP_PROP_FPS)
+        self.fps = self.cap.get(cv.CAP_PROP_FPS)
         
         # Used to process frames
         self.threaded_mode = True
@@ -172,75 +159,3 @@ class VideoPlayer:
     
         # Close the window
         cv.destroyAllWindows()
-        
-"""
-def main():
-    import sys
-    
-    with mp_face_mesh.FaceMesh(
-    max_num_faces=3,
-    refine_landmarks=True,
-    min_detection_confidence=0.5,
-    min_tracking_confidence=0.5) as face_mesh:
-
-        try:
-            fn = sys.argv[1]
-        except:
-            fn = 0
-        cap = video.create_capture(r'D:\Google Drive\Polytechnique\3A\INF573\Projet\speechBubbleSubtitles\data\video.mp4')
-    
-    
-        def process_frame(image, t0):
-            # some intensive computation...
-            if t - int(t) <= 0.05:
-                time.sleep(0.5)
-        
-            # To improve performance, optionally mark the image as not writeable to
-            # pass by reference.
-            image.flags.writeable = False
-            image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
-            results = face_mesh.process(image)
-        
-            # Draw the face mesh annotations on the image.
-            image.flags.writeable = True
-            image = cv2.cvtColor(image, cv2.COLOR_RGB2BGR)
-            if results.multi_face_landmarks:
-                for face_landmarks in results.multi_face_landmarks:
-                    
-                    mp_drawing.draw_landmarks(
-                        image=image,
-                        landmark_list=face_landmarks,
-                        connections=mp_face_mesh.FACEMESH_TESSELATION,
-                        landmark_drawing_spec=None,
-                        connection_drawing_spec=mp_drawing_styles
-                        .get_default_face_mesh_tesselation_style())
-                    
-                    mp_drawing.draw_landmarks(
-                        image=image,
-                        landmark_list=face_landmarks,
-                        connections=mp_face_mesh.FACEMESH_CONTOURS,
-                        landmark_drawing_spec=None,
-                        connection_drawing_spec=mp_drawing_styles
-                        .get_default_face_mesh_contours_style())
-                    mp_drawing.draw_landmarks(
-                        image=image,
-                        landmark_list=face_landmarks,
-                        connections=mp_face_mesh.FACEMESH_IRISES,
-                        landmark_drawing_spec=None,
-                        connection_drawing_spec=mp_drawing_styles
-                        .get_default_face_mesh_iris_connections_style())
-                
-            return image, t0
-        
-        
-   
-
-if __name__ == '__main__':
-    print(__doc__)
-    main()
-    cv.destroyAllWindows()
-
-"""
-
-
-

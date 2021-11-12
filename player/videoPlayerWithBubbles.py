@@ -1,72 +1,14 @@
 from player.videoPlayer import VideoPlayer
-from player.recognizer.face import Face
-from bubbleLibrary import FacesDetector
-from bubbleLibrary.utils_cv2 import dist
-from player.recognizer.interpolable import Interpolable
-from player.recognizer.recognizer import Recognizer
+from recognizer.face import Face
+from recognizer.utils import dist
+from recognizer.interpolable import Interpolable
+from recognizer.recognizer import Recognizer
+from recognizer.utils import getBoxFromLandmark
 
 from math import sqrt
 import numpy as np
-from numpy import unravel_index
-
-
-# FACE LANDMARKS
 import cv2
 import mediapipe as mp
-mp_drawing = mp.solutions.drawing_utils
-mp_drawing_styles = mp.solutions.drawing_styles
-mp_face_mesh = mp.solutions.face_mesh
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-def getBoxFromLandmark(landmark, frame_width, frame_height):
-    cx_min=  frame_width
-    cy_min = frame_height
-    cx_max= cy_max= 0
-        
-        
-    for id, lm in enumerate(landmark):
-        cx, cy = int(lm.x * frame_width), int(lm.y * frame_height)
-
-        if cx < cx_min:
-            cx_min = cx
-        if cy < cy_min:
-            cy_min = cy
-        if cx > cx_max:
-            cx_max = cx
-        if cy > cy_max:
-            cy_max = cy
-                
-    # From top-left/bottom-right ------> To Center/width-height
-    w = cx_max - cx_min
-    h = cy_max - cy_min
-    x = int((cx_min + cx_max) / 2.)
-    y = int((cy_min + cy_max) / 2.)
-    return (x,y,w,h)
-
-
-
-
-
-
-
-
-
-
 
 
 
@@ -114,58 +56,12 @@ class VideoPlayerWithBubbles(VideoPlayer):
         self.faces = []
         self.face_data  = []
         self.recognizer = Recognizer(face_path)
-        self.face_mesh = mp_face_mesh.FaceMesh(
+        self.face_mesh = mp.solutions.face_mesh.FaceMesh(
                             max_num_faces=3,
                             refine_landmarks=True,
                             min_detection_confidence=0.5,
                             min_tracking_confidence=0.5)
 
-
-
-        
-        
-        
-    def process_frame_old(self, frame, t):
-        # To improve performance, optionally mark the image as not writeable to
-        # pass by reference.
-        frame.flags.writeable = False
-        frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
-        results = self.face_mesh.process(frame)
-        
-        # Draw the face mesh annotations on the image.
-        frame.flags.writeable = True
-        frame = cv2.cvtColor(frame, cv2.COLOR_RGB2BGR)
-        if results.multi_face_landmarks:
-            for face_landmarks in results.multi_face_landmarks:
-                
-                if self.show_mesh:
-                    mp_drawing.draw_landmarks(
-                        image=frame,
-                        landmark_list=face_landmarks,
-                        connections=mp_face_mesh.FACEMESH_TESSELATION,
-                        landmark_drawing_spec=None,
-                        connection_drawing_spec=mp_drawing_styles
-                        .get_default_face_mesh_tesselation_style())
-                
-                if self.show_outline:
-                    mp_drawing.draw_landmarks(
-                        image=frame,
-                        landmark_list=face_landmarks,
-                        connections=mp_face_mesh.FACEMESH_CONTOURS,
-                        landmark_drawing_spec=None,
-                        connection_drawing_spec=mp_drawing_styles
-                        .get_default_face_mesh_contours_style())
-                
-                    mp_drawing.draw_landmarks(
-                        image=frame,
-                        landmark_list=face_landmarks,
-                        connections=mp_face_mesh.FACEMESH_IRISES,
-                        landmark_drawing_spec=None,
-                        connection_drawing_spec=mp_drawing_styles
-                        .get_default_face_mesh_iris_connections_style())
-                    
-                
-        return frame, t
     
     
     def process_frame(self, frame, frame_index):
@@ -213,7 +109,7 @@ class VideoPlayerWithBubbles(VideoPlayer):
                 if len(sim_mat.shape) > 1:
                     arg_max = np.argmax(sim_mat)
                     # tupple (index in existing faces object, index in detected face)
-                    index_max = unravel_index(arg_max, sim_mat.shape)
+                    index_max = np.unravel_index(arg_max, sim_mat.shape)
                     existing_index = available_faces_indexes[index_max[0]]
                     detected_index = index_max[1]
                     

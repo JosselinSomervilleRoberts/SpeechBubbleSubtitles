@@ -1,12 +1,9 @@
 # -*- coding: utf-8 -*-
 """
-Created on Wed Nov 10 10:56:36 2021
+Created on Wed Nov 10 11:17:18 2021
 
 @author: josse
 """
-
-
-
 
 import face_recognition
 import cv2
@@ -23,28 +20,27 @@ import numpy as np
 
 # Get a reference to webcam #0 (the default one)
 video_capture = cv2.VideoCapture(0)
+#video_capture = cv2.VideoCapture('data/video.mp4')
 
 # Load a sample picture and learn how to recognize it.
-astrid_image = face_recognition.load_image_file("data/josselin.jpg")
-astrid_face_encoding = face_recognition.face_encodings(astrid_image)[0]
+obama_image = face_recognition.load_image_file("data/josselin.jpg")
+obama_face_encoding = face_recognition.face_encodings(obama_image)[0]
 
-# Load a second sample picture and learn how to recognize it.
-#biden_image = face_recognition.load_image_file("biden.jpg")
-#biden_face_encoding = face_recognition.face_encodings(biden_image)[0]
+
 
 # Create arrays of known face encodings and their names
 known_face_encodings = [
-    astrid_face_encoding
+    obama_face_encoding
 ]
 known_face_names = [
-    "Josselin",
+    "Josselin"
 ]
 
 # Initialize some variables
 face_locations = []
 face_encodings = []
 face_names = []
-process_this_frame = False
+process_this_frame = True
 
 while True:
     # Grab a single frame of video
@@ -52,8 +48,6 @@ while True:
 
     # Resize frame of video to 1/4 size for faster face recognition processing
     small_frame = cv2.resize(frame, (0, 0), fx=0.25, fy=0.25)
-    landmarks = face_recognition.face_landmarks(small_frame)
-    print(landmarks)
 
     # Convert the image from BGR color (which OpenCV uses) to RGB color (which face_recognition uses)
     rgb_small_frame = small_frame[:, :, ::-1]
@@ -112,3 +106,5 @@ while True:
 # Release handle to the webcam
 video_capture.release()
 cv2.destroyAllWindows()
+
+

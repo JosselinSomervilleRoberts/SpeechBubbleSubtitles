@@ -1,17 +1,11 @@
-from player.videoPlayer import VideoPlayer
-from player.recognizer.face import Face
-from bubbleLibrary.utils_cv2 import dist
-from player.recognizer.interpolable import Interpolable
-from player.recognizer.recognizer import Recognizer
+from player import VideoPlayer
 
 from math import sqrt
 import numpy as np
 from collections import deque
-
-
-# FACE LANDMARKS
 import cv2
 import mediapipe as mp
+
 mp_drawing = mp.solutions.drawing_utils
 mp_drawing_styles = mp.solutions.drawing_styles
 mp_face_mesh = mp.solutions.face_mesh
@@ -21,24 +15,6 @@ mp_face_mesh = mp.solutions.face_mesh
 
 
 class VideoPlayerMesh(VideoPlayer):
-    
-    # similarity required to consider that two faces are the same
-    SIMILIRATY_THRESHOLD = 0.5 # between 0 (completly different) and 1 (exact same place and size)
-
-    # How often we run the recognition function
-    REFRESH_RECOGNITION = 10 # frames
-
-    # Used to clean up the cases in finish_process
-    MAXIMUM_NUMBER_OF_FRAMES_TO_JOIN_KNOWN_FACES = 8
-    MAXIMUM_NUMBER_OF_FRAMES_TO_JOIN_UNKNOWN_FACES = 4
-    MAXIMUM_DISTANCE_TO_JOIN_UNKNOWN_FACES = 0.04
-    FACE_NOT_APPEARED_MAX_NUMBER_FRAMES = 5
-    FACE_MINIMUM_APPEARED_NUMBER_FRAMES = 10
-
-    # How often we run finish_process
-    REFRESH_FINISH_PROCESS = 5 # frames
-    DELAY_FINISH_PROCESS = 20  # frames
-    
 
     def __init__(self, video_path):
         VideoPlayer.__init__(self, video_path)
@@ -55,9 +31,6 @@ class VideoPlayerMesh(VideoPlayer):
                             min_detection_confidence=0.5,
                             min_tracking_confidence=0.5)
 
-
-
-        
         
         
     def process_frame(self, frame, t):
