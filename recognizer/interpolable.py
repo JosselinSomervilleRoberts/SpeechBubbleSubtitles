@@ -18,7 +18,7 @@ class Interpolable:
         
         
         
-    def get(self, frame_index, average_nb=9):
+    def get(self, frame_index, average_nb=1):
         
         # S'il n'y a pas de valeurs
         if len(self.values) == 0:
