@@ -10,7 +10,7 @@ import numpy as np
 import cv2
 import mediapipe as mp
 
-
+from bubbleLibrary import bubbleClass
 
 
 class VideoPlayerWithBubbles(VideoPlayer):
@@ -42,6 +42,9 @@ class VideoPlayerWithBubbles(VideoPlayer):
         
         # Video data
         self.subtitle_path = subtitle_path
+
+        # Bubbles
+        self.bubbles = []
         
         # Display option
         self.show_mesh = False
@@ -245,8 +248,30 @@ class VideoPlayerWithBubbles(VideoPlayer):
         """This function replaces the variable self.current_frame using the video for display (self.cap_display)
         and the information processed (self.pending[0])"""
 
+        #afficher les bulles dans cette fonction (modifier self.current_frame)
+
         # Read the frame from video file
         VideoPlayer.prepare_display(self)
+
+        cv2.rectangle(self.current_frame, (0,0), (100,100), (255,0,0), 2)
+        
+        #Initialize first bubble
+        if self.current_frame_index == 0:
+            lines = "How dare you Detective Diaz I am your superior officer. BOOOOOOOOOOOONE!"
+            pos_mouth = (300,250)
+            pos_bubble = (200, 200)
+            width = 300
+            height = 100
+            bubble = bubbleClass.Bubble()
+            bubble.initiate(pos_bubble, width, height, lines, pos_mouth)            
+
+            self.bubbles.append(bubble)
+
+        #Draw bubbles on the frame
+        for bubble in self.bubbles:
+            new_pos = (100, int(100 + 25*np.sin(2*np.pi*self.current_frame_index/20.)))
+            bubble.setAttachMouth(new_pos)
+            bubble.draw(self.current_frame, new_pos)
 
         face_index = 0
         while face_index < len(self.faces):
