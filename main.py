@@ -8,7 +8,7 @@ Created on Wed Nov  3 13:33:59 2021
 from bubbleLibrary import read_both
 from bubbleLibrary import FaceDetector
 from bubbleLibrary import draw_bubble_text
-
+from bubbleLibrary import bubble
 
 data = read_both("data/video.mp4", "data/video.ass")
 print(data)
@@ -57,10 +57,8 @@ def PlayVideo(video_path):
     frame_count = 0
     index_subtitles = 0
     center = (400, 100)
-    bubble_width = 500
-    bubble_height = 100
-    new_w = 1500
-    new_h = 900
+    new_width = 1500
+    new_height = 900
     
     while True:
         grabbed, frame=video.read()
@@ -100,20 +98,28 @@ def PlayVideo(video_path):
         		cv2.putText(image, text, (startX, y),
         			cv2.FONT_HERSHEY_SIMPLEX, 0.45, (0, 0, 255), 2)
         
-        (face_img_h, face_img_w) = image.shape[:2]
-        frame = cv2.resize(image, (new_w, new_h))
+        (face_img_height, face_img_width) = image.shape[:2]
+        frame = cv2.resize(image, (new_width, new_height))
         
         if frame_count > data["subtitles"][index_subtitles]["end"]:
             index_subtitles += 1
-            
+        
+        #initialize dialog bubble
+        bubble_text = bubble.Bubble()
         
         if frame_count >= data["subtitles"][index_subtitles]["start"]:
             if i_max >= 0:
                 box = detections[0, 0, i_max, 3:7] * np.array([w, h, w, h])
                 (startX, startY, endX, endY) = box.astype("int")
-                draw_bubble_text(frame, center, bubble_width, bubble_height, (int(new_w*startX/face_img_w), int(new_h*(startY +int( 0.7*(endY - startY)))/face_img_h)))
-            cv2.putText(frame, data["subtitles"][index_subtitles]["text"], (int(center[0]-0.4*bubble_width), int(center[1] + 0.25 * bubble_height)),
-        			cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 0), 2)
+                #draw_bubble_text(frame, center, width, height, attach)
+                #give subtitles to the bubble, find optimal position and draw it there
+                lines = data["subtitles"][index_subtitles]["text"]
+                bubble_text.initiate(lines)
+                bubble_text.findOptimalPosition()
+                bubble_text.draw(frame, (int(new_width*startX/face_img_width), int(new_height*(startY +int( 0.7*(endY - startY)))/face_img_height)))
+                #draw_bubble_text(frame, center, bubble_width, bubble_height, (int(new_width*startX/face_img_width), int(new_height*(startY +int( 0.7*(endY - startY)))/face_img_height)))
+            
+            
             
         frame_count += 1
 
