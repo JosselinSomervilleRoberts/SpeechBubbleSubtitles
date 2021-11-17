@@ -1,16 +1,5 @@
-# -*- coding: utf-8 -*-
-"""
-Created on Wed Nov  3 19:25:11 2021
-
-@author: josse
-"""
-
 import cv2
 import numpy as np
-
-
-def dist(x1, x2):
-    return ((x1[0]-x2[0])**2 + (x1[1]-x2[1])**2)**0.5
 
 
 def rounded_rectangle(src, top_left, bottom_right, radius=0.5, outline_color=(0,0,0), fill_color=(255,255,255), thickness=5, line_type=cv2.LINE_AA):
