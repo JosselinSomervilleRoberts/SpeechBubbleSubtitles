@@ -1,10 +1,3 @@
-# -*- coding: utf-8 -*-
-"""
-Created on Wed Nov  3 19:22:31 2021
-
-@author: josse
-"""
-
 from bubbleLibrary.utils_cv2 import rounded_rectangle, dist
 import numpy as np
 import cv2
@@ -24,19 +17,19 @@ def draw_bubble_text(frame, center, width, height, attach):
     print(top_left, bottom_right)
     
     # Parameters
-    radius    = 0.5
-    stroke    = (255, 0,   0  )
-    fill      = (255, 255, 255)
-    thickness = 5
-    line_type = cv2.LINE_AA
+    radius           = 0.5
+    outline_color    = (255, 0,   0  )
+    fill_color       = (255, 255, 255)
+    thickness        = 5
+    line_type        = cv2.LINE_AA
     
     shapes = np.zeros_like(frame, np.uint8)
     rounded_rectangle(shapes,
                       top_left,
                       (bottom_right[1], bottom_right[0]),
                       radius = radius,
-                      stroke = stroke,
-                      fill   = fill,
+                      outline_color = outline_color,
+                      fill_color = fill_color,
                       thickness = thickness,
                       line_type = line_type)
     
@@ -52,11 +45,9 @@ def draw_bubble_text(frame, center, width, height, attach):
     list_points = [(x_tail_1, bottom_right[1]), (x_tail_2, bottom_right[1]), attach]
     #print(list_points)
     
-    cv2.drawContours(shapes, [np.array(list_points)], 0, fill, -1)
-    cv2.drawContours(shapes, [np.array(list_points)], 0, stroke, thickness)
+    cv2.drawContours(shapes, [np.array(list_points)], 0, fill_color, -1)
+    cv2.drawContours(shapes, [np.array(list_points)], 0, outline_color, thickness)
     #cv2.line(shapes, (100,200), (200,300), (255,255,255), 5, cv2.LINE_AA)
     alpha = 0.5
     mask = shapes.astype(bool)
     frame[mask] = cv2.addWeighted(frame, alpha, shapes, 1 - alpha, 0)[mask]
-    
-    
