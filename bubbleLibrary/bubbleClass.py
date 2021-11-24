@@ -14,14 +14,16 @@ class Bubble:
         self.attach_mouth = (0, 0)  # Coordinates of the attach point (mouth)
         self.attach_bubble = (0, 0) # Coordinates of the attach of tail on the bubble
         self.perso = None           # Character
+        self.frame_end = -1
         
     
-    def initiate(self, center, width, height, lines, attach_mouth, perso = None):
+    def initiate(self, center, width, height, lines, attach_mouth, frame_end = -1, perso = None):
         self.center = center
         self.width = width
         self.height = height 
         self.lines = lines
         self.attach_mouth = attach_mouth
+        self.frame_end = frame_end
         self.perso = perso
 
     #-------
@@ -65,7 +67,7 @@ class Bubble:
 
         top_left     = (self.center[0] - int(self.width/2.), self.center[1] - int(self.height/2.))
         bottom_right = (self.center[0] + int(self.width/2.), self.center[1] + int(self.height/2.))
-        print(top_left, bottom_right)
+        #print(top_left, bottom_right)
 
         # Parameters
         radius           = 0.5
@@ -116,6 +118,8 @@ class Bubble:
             return index
         else:
             return end_of_current_word(text, index+1)
+
+
     def drawText(self, frame):
         """Draws the text inside the bubble"""
         #use cv2.getTextSize

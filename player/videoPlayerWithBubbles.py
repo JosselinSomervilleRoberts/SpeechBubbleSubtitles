@@ -44,6 +44,7 @@ class VideoPlayerWithBubbles(VideoPlayer):
         # Video data
         self.subtitle_path = subtitle_path
         self.subtitles = read_subtitles(subtitle_path)
+        print(self.subtitles[:10])
 
         # Bubbles
         self.bubbles = []
@@ -255,33 +256,30 @@ class VideoPlayerWithBubbles(VideoPlayer):
         # Read the frame from video file
         VideoPlayer.prepare_display(self)
 
-        cv2.rectangle(self.current_frame, (0,0), (100,100), (255,0,0), 2)
-        
-        #Initialize first bubble
-        if self.current_frame_index == 0:
-            lines = "How dare you Detective Diaz I am your superior officer. BOOOOOOOOOOOONE!"
+        # New bubble
+        if len(self.subtitles) > 0 and self.current_frame_index >= self.subtitles[0]["start"]:
+            sub = self.subtitles.pop(0)
+            lines = sub["text"]
+            frame_end = sub["end"]
             pos_mouth = (300,250)
             pos_bubble = (200, 200)
             width = 300
             height = 100
             bubble = bubbleClass.Bubble()
-            bubble.initiate(pos_bubble, width, height, lines, pos_mouth)            
+            bubble.initiate(pos_bubble, width, height, lines, pos_mouth, frame_end)            
 
             self.bubbles.append(bubble)
-
-        #Draw bubbles on the frame
-        for bubble in self.bubbles:
-            new_pos = (100, int(100 + 25*np.sin(2*np.pi*self.current_frame_index/20.)))
-            bubble.setAttachMouth(new_pos)
-            bubble.draw(self.current_frame, new_pos)
+    
 
         face_index = 0
+        perso_pos = {}
         while face_index < len(self.faces):
             face = self.faces[face_index]
             removed = False
 
             if face.isPresent(self.current_frame_index):
                 face.draw(self.current_frame, self.current_frame_index)
+                if not(face.name is None): perso_pos[face.name.lower()] = face.getMouthPos(self.current_frame_index)
             else:
                 if self.current_frame_index > face.last_appearance: # La tete n'apparaitra plus
                     # On verifie juste qu'on n'en aura pas besoin pour le finish_process
@@ -290,3 +288,23 @@ class VideoPlayerWithBubbles(VideoPlayer):
                         removed = True
 
             if not(removed): face_index += 1
+
+        
+
+        #Draw bubbles on the frame
+        for bubble in self.bubbles:
+            new_pos = (0,100)#100, int(100 + 25*np.sin(2*np.pi*self.current_frame_index/20.)))
+            if "jake" in perso_pos:
+                new_pos = perso_pos["jake"]
+                if new_pos[0] < 0: new_pos = (0,100)
+                print("Pos jake =", new_pos)
+            bubble.setAttachMouth(new_pos)
+            bubble.draw(self.current_frame, new_pos)
+
+        # Clean old bubbles
+        ind = 0
+        while ind < len(self.bubbles):
+            if self.bubbles[ind].frame_end <= self.current_frame_index:
+                self.bubbles.pop(ind)
+            else:
+                ind += 1

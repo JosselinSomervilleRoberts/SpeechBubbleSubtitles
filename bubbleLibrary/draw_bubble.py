@@ -14,7 +14,7 @@ def draw_bubble_text(frame, center, width, height, attach):
     
     top_left     = (center[0] - int(width/2.), center[1] - int(height/2.))
     bottom_right = (center[0] + int(width/2.), center[1] + int(height/2.))
-    print(top_left, bottom_right)
+    #print(top_left, bottom_right)
     
     # Parameters
     radius           = 0.5
