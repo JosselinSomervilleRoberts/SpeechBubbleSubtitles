@@ -1,0 +1,1 @@
+from scenecuts.cutDetector import CutDetector
