@@ -44,8 +44,8 @@ class VideoPlayerWithBubbles(VideoPlayer):
         
         # Video data
         self.subtitle_path = subtitle_path
-        self.subtitles = read_subtitles(subtitle_path)
-        self.subtitles_process = [sub.copy() for sub in self.subtitles]
+        self.subtitles = []
+        self.subtitles_process = read_subtitles(subtitle_path)
 
         # Bubbles
         self.bubbles = []
@@ -171,6 +171,7 @@ class VideoPlayerWithBubbles(VideoPlayer):
             self.process_subtitle(self.subtitles_process.pop(0))
 
 
+
     def process_subtitle(self, subtitle):
         boxes = []
         start = subtitle["start"]
@@ -180,12 +181,17 @@ class VideoPlayerWithBubbles(VideoPlayer):
         faceIndex = -1
         for (i, face) in enumerate(self.faces):
             boxes += face.get_trace(start, end, self.frame_width, self.frame_height)
-            if face.name.lower() == name: faceIndex = i
+            if not(face.name is None) and face.name.lower() == name: faceIndex = i
 
         mouth_pos = (0.5,0.5)
         head_box = (0.4, 0.4, 0.6, 0.6)
 
         pos, w, h = find_optimal_pos(mouth_pos, head_box, boxes)
+        subtitle["pos"] = pos
+        subtitle["w"] = w
+        subtitle["h"] = h
+        self.subtitles.append(subtitle)
+        print(self.subtitles)
 
 
     def finish_process(self, frame_index):
@@ -283,9 +289,9 @@ class VideoPlayerWithBubbles(VideoPlayer):
             lines = sub["text"]
             frame_end = sub["end"]
             pos_mouth = (300,250)
-            pos_bubble = (200, 200)
-            width = 300
-            height = 100
+            pos_bubble = (int(self.frame_width * sub["pos"][0]), int(self.frame_height * sub["pos"][1]))
+            width = int(self.frame_width * sub["w"])
+            height = int(self.frame_height * sub["h"])
             bubble = bubbleClass.Bubble()
             bubble.initiate(pos_bubble, width, height, lines, pos_mouth, frame_end)            
 
@@ -318,7 +324,7 @@ class VideoPlayerWithBubbles(VideoPlayer):
             if "jake" in perso_pos:
                 new_pos = perso_pos["jake"]
                 if new_pos[0] < 0: new_pos = (0,100)
-                #print("Pos jake =", new_pos)
+                # print("Pos jake =", new_pos)
             bubble.setAttachMouth(new_pos)
             bubble.draw(self.current_frame, new_pos)
 
