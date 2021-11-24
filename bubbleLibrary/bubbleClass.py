@@ -104,17 +104,52 @@ class Bubble:
         mask = shapes.astype(bool)
         frame[mask] = cv2.addWeighted(frame, alpha, shapes, 1 - alpha, 0)[mask]
 
+    #index of the start of the word with a character at position index in text
+    def start_of_current_word(text, index):
+        if index == 0 or text[index-1] == ' ':
+            return index
+        else:
+            return start_of_current_word(text, index-1) 
+    #index of the end of the word with a character at position index in text
+    def end_of_current_word(text, index):
+        if index == len(text) or text[index] == ' ':
+            return index
+        else:
+            return end_of_current_word(text, index+1)
     def drawText(self, frame):
         """Draws the text inside the bubble"""
         #use cv2.getTextSize
         text_size = cv2.getTextSize(self.lines, fontFace = cv2.FONT_HERSHEY_SIMPLEX, fontScale = self.font_scale, thickness = 2)
         nb_lines = text_size[0][0] // self.width + 1
-        for line in range(nb_lines):
+        margin = 20
+        text_per_line = [self.lines[(index_line * len(self.lines))//nb_lines:((index_line+1) * len(self.lines))//nb_lines] for index_line in range(nb_lines)]
+        text_size_last_line = cv2.getTextSize(text_per_line[-1], fontFace = cv2.FONT_HERSHEY_SIMPLEX, fontScale = self.font_scale, thickness = 2)[0][0]
+        empty_space_at_the_end = (len(text_per_line[-1]) * (self.width - margin)) // text_size_last_line - len(text_per_line[-1])
+        for index_line in range(nb_lines):
             #put text of the line in the right spot, centering and stuff
+            #if line starts with a space, remove it
+            if text_per_line[index_line][0] == ' ':
+                text_per_line[index_line] = text_per_line[index_line][1:]
+            #if the line cuts a word in half, either put the word on the next line or add a '-'
+            index_end_of_last_word = len(text_per_line[index_line])
+            index_end_of_line = self.width - margin
+            if index_line < nb_lines - 1 and index_end_of_line < index_end_of_last_word:
+                if empty_space_at_the_end > index_end_of_last_word - index_end_of_line:
+                    #put word on next line
+                    index_start_of_last_word = start_of_current_word(text_per_line[index_line], index_end_of_line)
+                    text_per_line[index_line+1] = text_per_line[index_line][index_start_of_last_word:] + text_per_line[index_line+1]
+                    text_per_line[index_line] = text_per_line[index_line][:index_start_of_last_word]
+                    empty_space_at_the_end = empty_space_at_the_end - index_end_of_last_word + index_end_of_line
+                else:
+                    #add '-'
+                    text_per_line[index_line] += '-'
+            cv2.putText(frame, text_per_line[index_line], org = (int(self.center[0]-0.5*(self.width-margin)), int(self.center[1] - (nb_lines-1)*0.5*(self.height - margin) / nb_lines + index_line*(self.height - margin) / nb_lines)),
+        			    fontFace = cv2.FONT_HERSHEY_SIMPLEX, fontScale = self.font_scale, color = (0, 0, 0), thickness = 2)
+
         #print("Text size = %sx%s" % (str(text_size[0][0]), str(text_size[0][1])))
-        print("Height: %s // %s = %s" % (str(text_size[0][0]), str(self.width), nb_lines))
-        cv2.putText(frame, self.lines, org = (int(self.center[0]-0.4*self.width), int(self.center[1] + 0.25 * self.height)),
-        			fontFace = cv2.FONT_HERSHEY_SIMPLEX, fontScale = self.font_scale, color = (0, 0, 0), thickness = 2)
+        #print("Height: %s // %s = %s" % (str(text_size[0][0]), str(self.width), nb_lines))
+        #cv2.putText(frame, self.lines, org = (int(self.center[0]-0.4*self.width), int(self.center[1] + 0.25 * self.height)),
+        #			fontFace = cv2.FONT_HERSHEY_SIMPLEX, fontScale = self.font_scale, color = (0, 0, 0), thickness = 2)
 
     def draw(self, frame, attach_mouth):
         """Draw the bubble and the text inside it"""
