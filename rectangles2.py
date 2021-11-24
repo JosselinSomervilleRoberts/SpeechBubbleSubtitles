@@ -197,6 +197,19 @@ def rectangle_size_centered(matrix):
     return h,v
 
 
+def find_optimal_pos(mouth_pos, head_box, boxes):
+    nx, ny = 100, 50
+
+    # Matrices
+    obstacles = get_matrix_obstacles(nx, ny, boxes)
+    h, v, area = get_matrix_size(nx, ny, obstacles, mouth_pos)
+    distance = get_matrix_distance(nx, ny, mouth_pos, head_box)
+    pos_preference = get_matrix_preffered_pos(nx, ny, mouth_pos, head_box)
+    score = area * (2-distance)**2 * pos_preference
+
+    optimal_pos = np.unravel_index(score.argmax(), score.shape)
+    return (optimal_pos[1] / nx, optimal_pos[0] / ny), h[optimal_pos], v[optimal_pos]
+
 if __name__ == '__main__':
     nx, ny = 50, 50
     mouth_pos = (0.5,0.5)

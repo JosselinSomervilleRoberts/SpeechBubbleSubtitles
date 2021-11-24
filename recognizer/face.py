@@ -193,3 +193,15 @@ class Face:
         self.w.cleanup(frame_index)
         self.h.cleanup(frame_index)
         self.landmarks.cleanup(frame_index)
+
+    
+    def get_trace(self, frame_start, frame_stop, divX=1., divY=1.):
+        boxes = []
+        for frame_index in range(frame_start, frame_stop + 1):
+            if self.isPresent(frame_index):
+                c = self.center.get(frame_index)
+                w = self.w.get(frame_index)
+                h = self.h.get(frame_index)
+                box = ((c[0] - w/2.) / divX, (c[1] - h/2.) / divY, (c[0] + w/2.) / divX, (c[1] + h/2.) / divY )
+                boxes.append(box)
+        return boxes

@@ -5,6 +5,7 @@ from recognizer.interpolable import Interpolable
 from recognizer.recognizer import Recognizer
 from recognizer.utils import getBoxFromLandmark
 from bubbleLibrary.read_files import read_subtitles
+from rectangles2 import find_optimal_pos
 
 from math import sqrt
 import numpy as np
@@ -44,7 +45,7 @@ class VideoPlayerWithBubbles(VideoPlayer):
         # Video data
         self.subtitle_path = subtitle_path
         self.subtitles = read_subtitles(subtitle_path)
-        print(self.subtitles[:10])
+        self.subtitles_process = [sub.copy() for sub in self.subtitles]
 
         # Bubbles
         self.bubbles = []
@@ -165,6 +166,26 @@ class VideoPlayerWithBubbles(VideoPlayer):
         # Every so often, we cleanup the faces array
         if (frame_index > VideoPlayerWithBubbles.DELAY_FINISH_PROCESS) and (frame_index % VideoPlayerWithBubbles.REFRESH_FINISH_PROCESS == 0):
             self.finish_process(frame_index - VideoPlayerWithBubbles.DELAY_FINISH_PROCESS)
+
+        if self.subtitles_process[0]["end"] < frame_index:
+            self.process_subtitle(self.subtitles_process.pop(0))
+
+
+    def process_subtitle(self, subtitle):
+        boxes = []
+        start = subtitle["start"]
+        end = subtitle["end"]
+        name = "jake" # TODO: change to subtitle["name"]
+
+        faceIndex = -1
+        for (i, face) in enumerate(self.faces):
+            boxes += face.get_trace(start, end, self.frame_width, self.frame_height)
+            if face.name.lower() == name: faceIndex = i
+
+        mouth_pos = (0.5,0.5)
+        head_box = (0.4, 0.4, 0.6, 0.6)
+
+        pos, w, h = find_optimal_pos(mouth_pos, head_box, boxes)
 
 
     def finish_process(self, frame_index):
