@@ -5,7 +5,7 @@ from recognizer.interpolable import Interpolable
 from recognizer.recognizer import Recognizer
 from recognizer.utils import getBoxFromLandmark
 from bubbleLibrary.read_files import read_subtitles
-from rectangles2 import find_optimal_pos
+from posFinder import find_optimal_pos, display_results
 
 from math import sqrt
 import numpy as np
@@ -178,15 +178,32 @@ class VideoPlayerWithBubbles(VideoPlayer):
         end = subtitle["end"]
         name = "jake" # TODO: change to subtitle["name"]
 
-        faceIndex = -1
+        face_index = -1
         for (i, face) in enumerate(self.faces):
             boxes += face.get_trace(start, end, self.frame_width, self.frame_height)
-            if not(face.name is None) and face.name.lower() == name: faceIndex = i
+            if not(face.name is None) and face.name.lower() == name: face_index = i
 
-        mouth_pos = (0.5,0.5)
-        head_box = (0.4, 0.4, 0.6, 0.6)
 
-        pos, w, h = find_optimal_pos(mouth_pos, head_box, boxes)
+        mouth_pos = (0.5, 1.0) # We'll keep the lowest mouth pos found
+        head_box = (0.4, 0.4, 0.2, 0.2)
+        if face_index < 0: # We did not find who is speaking
+            mouth_pos = (0.5, 0.5)
+            pass # TODO
+        else:
+            face = self.faces[face_index]
+            subtitle["face_id"] = face.id
+            for frame_index in range(start, end):
+                if face.isPresent(frame_index):
+                    new_mouth_pos = face.getMouthPos(frame_index)
+                    if new_mouth_pos[1] >=0 and new_mouth_pos[1] / self.frame_height < mouth_pos[1]:
+                        mouth_pos = (new_mouth_pos[0] / self.frame_width, new_mouth_pos[1] / self.frame_height)
+                        head_box = face.getBox(frame_index)
+            
+
+        w = 0.3
+        h = 0.15
+        #display_results(mouth_pos, head_box, boxes, w, h, int(self.frame_width / 4.), int(self.frame_height / 4.))
+        pos = find_optimal_pos(mouth_pos, head_box, boxes, w, h, int(self.frame_width / 4.), int(self.frame_height / 4.))
         subtitle["pos"] = pos
         subtitle["w"] = w
         subtitle["h"] = h

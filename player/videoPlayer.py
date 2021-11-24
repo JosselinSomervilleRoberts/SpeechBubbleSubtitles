@@ -57,7 +57,7 @@ class VideoPlayer:
         self.fps = self.cap.get(cv.CAP_PROP_FPS)
         
         # Used to process frames
-        self.threaded_mode = True
+        self.threaded_mode = False
         self.nb_of_threads = min(VideoPlayer.MAX_THREADS_NUMBER, cv.getNumberOfCPUs())
         self.pool = ThreadPool(processes = self.nb_of_threads)
         self.pending = deque()

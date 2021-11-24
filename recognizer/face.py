@@ -116,6 +116,14 @@ class Face:
         return (mouth_x, mouth_y)
     
     
+    def getBox(self, frame_index):
+        c = self.center.get(frame_index)
+        w = self.w.get(frame_index)
+        h = self.h.get(frame_index)
+        box = ((c[0] - w/2.) , (c[1] - h/2.), (c[0] + w/2.) , (c[1] + h/2.))
+        return box
+    
+    
     
     def __eq__(self, other):
         """

@@ -8,7 +8,7 @@ def score_distance(x):
     a = 10
     b = 0.5
     s = 0.2
-    g = x + s
+    g = 0.18*x + s
     f = (1/(b*g)**2 - a/(b*g)) * 0.1 *(1-x) / a
     return min(1, - 4.82*f)
 
@@ -136,23 +136,25 @@ def final_score(int_s, w, h):
 
 
 
-def find_optimal_pos(boxes, mouth_pos, head_box, box_width, box_height,  nx, ny):
+def find_optimal_pos(mouth_pos, head_box, boxes, box_width, box_height, nx, ny):
     s = build_score(boxes, mouth_pos, head_box, nx, ny)
     int_s = integrateMatrix(s)
     final_s = final_score(int_s, int(box_width * nx), int(box_height * ny))
     optimal_pos = np.unravel_index(final_s.argmax(), final_s.shape)
-    return find_optimal_pos
+    return (optimal_pos[1] / nx, optimal_pos[0] / ny)
 
 
     
-def display_results():
-    mouth_pos = (0.3, 0.5)
-    nx = 200
-    ny = 200
-    head_box = (0.2, 0.4, 0.2, 0.2)
-    boxes = [head_box] + [(0.1, 0.1, 0.1, 0.1), (0.5, 0.7, 0.3, 0.25), (0.8, 0.1, 0.1, 0.2), (0.5, 0.3, 0.2, 0.1), (0.02, 0.3, 0.15, 0.4)]
-    width = 0.35
-    height = 0.2
+def display_results(mouth_pos = (0.3, 0.5),
+                    head_box = (0.2, 0.4, 0.2, 0.2),
+                    boxes = [(0.2, 0.4, 0.2, 0.2), (0.1, 0.1, 0.1, 0.1), (0.5, 0.7, 0.3, 0.25), (0.8, 0.1, 0.1, 0.2), (0.5, 0.3, 0.2, 0.1), (0.02, 0.3, 0.15, 0.4)],
+                    width = 0.35,
+                    height = 0.2,
+                    nx = 200,
+                    ny = 200):
+    
+    import matplotlib.pyplot as plt
+    from matplotlib.patches import Rectangle, Circle
     
     
     matrices = [build_obstacles(boxes, nx, ny),
@@ -215,12 +217,10 @@ def display_results():
                 edgecolor = 'green',
                 fill=False,
                 lw=1))
+    plt.show()
     
     
     
     
 if __name__ == '__main__':
-    import matplotlib.pyplot as plt
-    from matplotlib.patches import Rectangle, Circle
-    
     display_results()
