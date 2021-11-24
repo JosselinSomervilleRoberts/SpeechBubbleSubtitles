@@ -318,7 +318,7 @@ class VideoPlayerWithBubbles(VideoPlayer):
             if "jake" in perso_pos:
                 new_pos = perso_pos["jake"]
                 if new_pos[0] < 0: new_pos = (0,100)
-                print("Pos jake =", new_pos)
+                #print("Pos jake =", new_pos)
             bubble.setAttachMouth(new_pos)
             bubble.draw(self.current_frame, new_pos)
 
