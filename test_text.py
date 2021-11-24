@@ -56,4 +56,18 @@ def drawText():
                 text_per_line[index_line] += '-'
         print(text_per_line[index_line])
 
-drawText()
+#drawText()
+
+def cutLinesIntoWords(lines):
+    """Takes lines (string) as input and returns the list of words"""
+    list_of_words = [""]
+    current_lines_index = 0
+    while current_lines_index < len(lines):
+        if lines[current_lines_index] == ' ':
+            list_of_words.append("")
+        else:
+            list_of_words[-1] += lines[current_lines_index]
+        current_lines_index += 1
+    return list_of_words
+
+print(cutLinesIntoWords("kzndkzd jzkdbjzkd bdezjbdedbejzkdb"))
