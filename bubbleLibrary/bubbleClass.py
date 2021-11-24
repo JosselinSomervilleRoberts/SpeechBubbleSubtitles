@@ -106,33 +106,35 @@ class Bubble:
         mask = shapes.astype(bool)
         frame[mask] = cv2.addWeighted(frame, alpha, shapes, 1 - alpha, 0)[mask]
 
-    #index of the start of the word with a character at position index in text
-    def start_of_current_word(text, index):
-        if index == 0 or text[index-1] == ' ':
-            return index
-        else:
-            return start_of_current_word(text, index-1) 
-    #index of the end of the word with a character at position index in text
-    def end_of_current_word(text, index):
-        if index == len(text) or text[index] == ' ':
-            return index
-        else:
-            return end_of_current_word(text, index+1)
-
     def cutLinesIntoWords(self):
-        """Takes lines (string) as input and returns the list of words"""
+        """Returns the list of words in self.lines"""
         list_of_words = [""]
-        current_lines_index = 0
-        while current_lines_index < len(self.lines):
-            if self.lines[current_lines_index] == ' ':
+        lines_index = 0
+        while lines_index < len(self.lines):
+            #if a \n or \N is found (raw or normal), transform it into the \n word. We assume that whenever there is a \ in the text it is followed by n or N.
+            if "\\" in r"%r" % self.lines[lines_index:lines_index+1]:
+                list_of_words.append("\n")
                 list_of_words.append("")
+                lines_index +=2
+            elif "\\n" in r"%r" % self.lines[lines_index:lines_index+1] or "\\N" in r"%r" % self.lines[lines_index:lines_index+1]:
+                list_of_words.append("\n")
+                lines_index += 1
+            #else, just add the character to the current word unless it is a space
             else:
-                list_of_words[-1] += self.lines[current_lines_index]
-            current_lines_index += 1
+                if self.lines[lines_index] == ' ':
+                    list_of_words.append("")
+                else:
+                    list_of_words[-1] += self.lines[lines_index]
+                lines_index += 1
         return list_of_words
 
-    def jumpLinePosition(word):
-        """Finds the position (if it exists)"""
+    def newLinePosition(word):
+        """Finds the position (if it exists) of a new line. Should work for strings and raw strings"""
+        for i in range(len(word)-1):
+            if "\\" in r"%r" % word[i:i+1] or "\\n" in r"%r" % word[i:i+1] or "\\N" in r"%r" % word[i:i+1]:
+                return i
+        return -1
+
 
     def drawText(self, frame):
         """Draws the text inside the bubble"""
@@ -144,14 +146,20 @@ class Bubble:
         margin = 20
         empty_space_on_line = self.width - margin #size of empty space that can be filled with words
         for word in list_of_words:
-            size_word = cv2.getTextSize(word, fontFace = cv2.FONT_HERSHEY_SIMPLEX, fontScale = self.font_scale, thickness = 2)[0][0]
-            #if there is not enough space on the current line,  change line and reset the space left on the line
-            if size_word > empty_space_on_line:
+            #if word is a \n, just change line
+            if word == "\n":
                 text_per_line.append("")
                 empty_space_on_line = self.width - margin
 
-            text_per_line[-1] += word + " "
-            empty_space_on_line -= size_word + size_space
+            else:                
+                size_word = cv2.getTextSize(word, fontFace = cv2.FONT_HERSHEY_SIMPLEX, fontScale = self.font_scale, thickness = 2)[0][0]
+                #if there is not enough space on the current line, change line and reset the space left on the line
+                if size_word > empty_space_on_line:
+                    text_per_line.append("")
+                    empty_space_on_line = self.width - margin
+
+                text_per_line[-1] += word + " "
+                empty_space_on_line -= size_word + size_space
 
         nb_lines = len(text_per_line)
         for index_line in range(nb_lines):
@@ -159,7 +167,7 @@ class Bubble:
             cv2.putText(frame, text_per_line[index_line], org = (int(self.center[0]-0.5*size_text), int(self.center[1] - (nb_lines-1)*0.5*(self.height - margin) / nb_lines + index_line*(self.height - margin) / nb_lines)),
         			    fontFace = cv2.FONT_HERSHEY_SIMPLEX, fontScale = self.font_scale, color = (0, 0, 0), thickness = 2)
 
-
+    ###trouver une size min acceptable pour la bulle en fonction du texte dans la bulle
     def draw(self, frame, attach_mouth):
         """Draw the bubble and the text inside it"""
         #Draw bubble
