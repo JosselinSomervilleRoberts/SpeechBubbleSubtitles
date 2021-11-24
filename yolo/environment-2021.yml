@@ -1,0 +1,35 @@
+################################################################################
+###                                                                          ###
+### Created by Martin Genet for MEC552B                                      ###
+###                                                                          ###
+### École Polytechnique, Palaiseau, France                                   ###
+###                                                                          ###
+################################################################################
+
+name: MEC552-2021
+channels:
+  - conda-forge
+  - defaults
+dependencies:
+  - fenics=2019.1.0
+  - ipywidgets=7.6.4
+  - itkwidgets=0.32.0
+  - jupyter=1.0.0
+  - jupyter_contrib_nbextensions=0.5.1
+  - jupyter_nbextensions_configurator=0.4.1
+  - matplotlib=3.4.3
+  - meshio=5.0.0
+  - notebook=6.4.3
+  - numpy=1.21.2
+  - pip
+  - python=3.7.10
+  - scipy=1.7.1
+  - superlu_dist=6.2.0 # MG20211105: This should be included by FEniCS, right? Kostas had issues without this line.
+  - sympy=1.8
+  - vtk=9.0.3
+  - vtkplotter=2020.3.1
+  - pip:
+    - gmsh==4.8.4
+    - pygmsh==6.1.1 #MG20201111: physical groups seem to not work with pygmsh >= 7, see https://github.com/nschloe/pygmsh/issues/397
+    - myPythonLibrary
+    - myVTKPythonLibrary
