@@ -4,6 +4,7 @@ from recognizer.utils import dist
 from recognizer.interpolable import Interpolable
 from recognizer.recognizer import Recognizer
 from recognizer.utils import getBoxFromLandmark
+from bubbleLibrary.read_files import read_subtitles
 
 from math import sqrt
 import numpy as np
@@ -42,6 +43,7 @@ class VideoPlayerWithBubbles(VideoPlayer):
         
         # Video data
         self.subtitle_path = subtitle_path
+        self.subtitles = read_subtitles(subtitle_path)
 
         # Bubbles
         self.bubbles = []

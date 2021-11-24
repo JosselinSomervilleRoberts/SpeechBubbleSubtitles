@@ -110,6 +110,7 @@ class Bubble:
         text_size = cv2.getTextSize(self.lines, fontFace = cv2.FONT_HERSHEY_SIMPLEX, fontScale = self.font_scale, thickness = 2)
         nb_lines = text_size[0][0] // self.width + 1
         for line in range(nb_lines):
+            pass
             #put text of the line in the right spot, centering and stuff
         #print("Text size = %sx%s" % (str(text_size[0][0]), str(text_size[0][1])))
         print("Height: %s // %s = %s" % (str(text_size[0][0]), str(self.width), nb_lines))
