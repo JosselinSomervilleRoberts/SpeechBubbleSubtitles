@@ -1,9 +1,7 @@
 """Old main file for showing bubbles"""
 
 from bubbleLibrary import read_both
-from bubbleLibrary import FaceDetector
-from bubbleLibrary import draw_bubble_text
-from bubbleLibrary import bubble
+from bubbleLibrary import bubbleClass
 
 data = read_both("data/video.mp4", "data/video.ass")
 print(data)

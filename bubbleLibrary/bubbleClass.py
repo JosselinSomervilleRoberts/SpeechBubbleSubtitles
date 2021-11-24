@@ -5,19 +5,23 @@ import cv2
 class Bubble:
     
     def __init__(self):
-        self.computed = False # if the bubble was computed
-        self.center = (0, 0)  # Center of bubble
-        self.width = 0        # Width
-        self.height = 0       # Height
-        self.lines = []       # Lines of text to display
-        self.fontsize = 12    # Font size
-        self.attach1 = (0, 0) # Coordinates of attach point (mouth)
-        self.attach2 = (0, 0) # Coordinated of attach of tail on the bubble
-        self.perso = None     # Character
+        self.computed = False       # if the bubble was computed
+        self.center = (0, 0)        # Center of bubble
+        self.width = 0              # Width
+        self.height = 0             # Height
+        self.lines = []             # Lines of text to display
+        self.font_scale = 0.5       # Font scale
+        self.attach_mouth = (0, 0)  # Coordinates of the attach point (mouth)
+        self.attach_bubble = (0, 0) # Coordinates of the attach of tail on the bubble
+        self.perso = None           # Character
         
     
-    def initiate(self, text, perso = None):
-        self.lines = text
+    def initiate(self, center, width, height, lines, attach_mouth, perso = None):
+        self.center = center
+        self.width = width
+        self.height = height 
+        self.lines = lines
+        self.attach_mouth = attach_mouth
         self.perso = perso
 
     #-------
@@ -30,24 +34,26 @@ class Bubble:
     def getHeight(self):
         return self.height
 
+    #-------
+    #Setters
+    #-------
+
+    def setAttachMouth(self, new_attach_mouth):
+        self.attach_mouth = new_attach_mouth
+
     #---------
     #Functions
     #---------
 
-    def findOptimalPosition(self, list_of_frames = None):
-        #1. find best width
-        #2. put dialog in two lines if two big
-        #3. limit width and height so that stays in frame
-        """Finds where to place the bubble"""
-        self.center    = (400, 100)
-        #max_width      = 25 * self.fontsize
-        self.width     = 2 * (len(self.lines)) * self.fontsize
-        #self.width = 500
-        self.height    = 100
-        # self.fontsize =
+    def findAttachPosition(self, list_of_frames = None):
+        #find best position for attach on bubble
+        #put dialog in several lines if too big
+        """Finds where to place the attach on the bubble"""
+        # self.font_scale =
+        #self.attach_bubble = 
         self.computed = True
 
-    def draw_bubble(self, frame, attach):
+    def drawBubble(self, frame, attach):
         """
         Draws a bubble
         input:
@@ -98,16 +104,23 @@ class Bubble:
         mask = shapes.astype(bool)
         frame[mask] = cv2.addWeighted(frame, alpha, shapes, 1 - alpha, 0)[mask]
 
+    def drawText(self, frame):
+        """Draws the text inside the bubble"""
+        #use cv2.getTextSize
+        text_size = cv2.getTextSize(self.lines, fontFace = cv2.FONT_HERSHEY_SIMPLEX, fontScale = self.font_scale, thickness = 2)
+        nb_lines = text_size[0][0] // self.width + 1
+        for line in range(nb_lines):
+            #put text of the line in the right spot, centering and stuff
+        #print("Text size = %sx%s" % (str(text_size[0][0]), str(text_size[0][1])))
+        print("Height: %s // %s = %s" % (str(text_size[0][0]), str(self.width), nb_lines))
+        cv2.putText(frame, self.lines, org = (int(self.center[0]-0.4*self.width), int(self.center[1] + 0.25 * self.height)),
+        			fontFace = cv2.FONT_HERSHEY_SIMPLEX, fontScale = self.font_scale, color = (0, 0, 0), thickness = 2)
 
-    def draw(self, frame, attach1):
+    def draw(self, frame, attach_mouth):
         """Draw the bubble and the text inside it"""
         #Draw bubble
-        self.attach1 = attach1
-        self.draw_bubble(frame, self.attach1)
+        self.attach_mouth = attach_mouth
+        self.drawBubble(frame, self.attach_mouth)
 
         #Draw text
-        cv2.putText(frame, self.lines, (int(self.center[0]-0.4*self.width), int(self.center[1] + 0.25 * self.height)),
-        			cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 0), 2)
-        
-        modified_frame = frame
-        return modified_frame
+        self.drawText(frame)
