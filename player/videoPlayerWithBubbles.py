@@ -310,7 +310,10 @@ class VideoPlayerWithBubbles(VideoPlayer):
             width = int(self.frame_width * sub["w"])
             height = int(self.frame_height * sub["h"])
             bubble = bubbleClass.Bubble()
-            bubble.initiate(pos_bubble, width, height, lines, pos_mouth, frame_end)            
+            bubble.initiate(pos_bubble, width, height, lines, pos_mouth, frame_end)
+
+            area = bubble.estimateOptimalBubbleArea()
+            bubble.setWidthAndHeight(width, area / width)
 
             self.bubbles.append(bubble)
     
@@ -338,12 +341,14 @@ class VideoPlayerWithBubbles(VideoPlayer):
         #Draw bubbles on the frame
         for bubble in self.bubbles:
             new_pos = (0,100)#100, int(100 + 25*np.sin(2*np.pi*self.current_frame_index/20.)))
+            draw_tail = False
             if "jake" in perso_pos:
                 new_pos = perso_pos["jake"]
-                if new_pos[0] < 0: new_pos = (0,100)
+                draw_tail = new_pos[0] >= 0 #if mouth wasn't found (ie pos < 0), we don't want to draw the tail of the bubble
+                    
                 # print("Pos jake =", new_pos)
             bubble.setAttachMouth(new_pos)
-            bubble.draw(self.current_frame, new_pos)
+            bubble.draw(self.current_frame, draw_tail = draw_tail)
 
         # Clean old bubbles
         ind = 0
