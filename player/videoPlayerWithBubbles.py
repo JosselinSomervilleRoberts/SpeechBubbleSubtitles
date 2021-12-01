@@ -66,8 +66,8 @@ class VideoPlayerWithBubbles(VideoPlayer):
         self.face_mesh = mp.solutions.face_mesh.FaceMesh(
                             max_num_faces=3,
                             refine_landmarks=True,
-                            min_detection_confidence=0.5,
-                            min_tracking_confidence=0.5)
+                            min_detection_confidence=0.2,
+                            min_tracking_confidence=0.4)
 
     
     
@@ -177,12 +177,17 @@ class VideoPlayerWithBubbles(VideoPlayer):
         start = subtitle["start"]
         end = subtitle["end"]
         name = "jake" # TODO: change to subtitle["name"]
+        if not(subtitle["name"] is None) and len(subtitle["name"]) > 0:
+            name = subtitle["name"]
+            print("OKKKK", name)
+        else:
+            print("NOP")
 
         face_index = -1
         for (i, face) in enumerate(self.faces):
             boxes += face.get_trace(start, end, self.frame_width, self.frame_height)
             if not(face.name is None) and face.name.lower() == name: face_index = i
-
+        print(face_index)
 
         mouth_pos = (0.5, 1.0) # We'll keep the lowest mouth pos found
         head_box = (0.4, 0.4, 0.2, 0.2)
@@ -190,6 +195,7 @@ class VideoPlayerWithBubbles(VideoPlayer):
             mouth_pos = (0.5, 0.5)
             pass # TODO
         else:
+            print("SPEAKER FOUND")
             face = self.faces[face_index]
             subtitle["face_id"] = face.id
             for frame_index in range(start, end):
@@ -208,7 +214,6 @@ class VideoPlayerWithBubbles(VideoPlayer):
         subtitle["w"] = w
         subtitle["h"] = h
         self.subtitles.append(subtitle)
-        print(self.subtitles)
 
 
     def finish_process(self, frame_index):
@@ -310,7 +315,7 @@ class VideoPlayerWithBubbles(VideoPlayer):
             width = int(self.frame_width * sub["w"])
             height = int(self.frame_height * sub["h"])
             bubble = bubbleClass.Bubble()
-            bubble.initiate(pos_bubble, width, height, lines, pos_mouth, frame_end)            
+            bubble.initiate(pos_bubble, width, height, lines, pos_mouth, frame_end, perso = sub["name"])            
 
             self.bubbles.append(bubble)
     
@@ -338,8 +343,14 @@ class VideoPlayerWithBubbles(VideoPlayer):
         #Draw bubbles on the frame
         for bubble in self.bubbles:
             new_pos = (0,100)#100, int(100 + 25*np.sin(2*np.pi*self.current_frame_index/20.)))
-            if "jake" in perso_pos:
-                new_pos = perso_pos["jake"]
+            if bubble.perso is None or len(bubble.perso) == 0 or not(bubble.perso in perso_pos):
+                # TODO: Change to search for eprso speaking without names
+                new_pos = (0,100)
+                if len(self.faces) > 0:
+                    new_pos = self.faces[0].getMouthPos(self.current_frame_index)
+                if new_pos[0] < 0: new_pos = (0,100)
+            else:
+                new_pos = perso_pos[bubble.perso]
                 if new_pos[0] < 0: new_pos = (0,100)
                 # print("Pos jake =", new_pos)
             bubble.setAttachMouth(new_pos)

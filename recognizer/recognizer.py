@@ -19,7 +19,10 @@ class Recognizer:
     def addKnownFace(self, image_path, name):
         # Load image
         image    = face_recognition.load_image_file(image_path)
-        encoding = face_recognition.face_encodings(image, model="small")[0]
+        try:
+            encoding = face_recognition.face_encodings(image, model="small")[0]
+        except:
+            raise Exception("No face in " + image_path)
         
         # Add the encoding to the recognition
         self.addKnownFaceEncoding(encoding, name)
