@@ -141,7 +141,7 @@ def find_optimal_pos(mouth_pos, head_box, boxes, box_width, box_height, nx, ny):
     int_s = integrateMatrix(s)
     final_s = final_score(int_s, int(box_width * nx), int(box_height * ny))
     optimal_pos = np.unravel_index(final_s.argmax(), final_s.shape)
-    return (optimal_pos[1] / nx, optimal_pos[0] / ny)
+    return (optimal_pos[1] / nx - 0.5 * box_width, optimal_pos[0] / ny - 0.5 * box_height)
 
 
     

@@ -15,6 +15,7 @@ class Bubble:
         self.attach_bubble = [(0,0), (0,0)] # Coordinates of the attach of the tail on the bubble
         self.perso = None                   # Character
         self.frame_end = -1                 # ???
+        self.display_attach = False
         
     def initiateAttachBubble(self):
         """compute the attach of the tail on the bubble. The two points should belong to :
@@ -70,7 +71,7 @@ class Bubble:
         self.attach_bubble[0] = (int(x_up), int(y_up))
         self.attach_bubble[1] = (int(x_down), int(y_down))
 
-    def initiate(self, center, width, height, lines, attach_mouth, frame_end = -1, perso = None):
+    def initiate(self, center, width, height, lines, attach_mouth, display_attach, frame_end = -1, perso = None):
         self.center = center
         self.width = width
         self.height = height 
@@ -78,6 +79,7 @@ class Bubble:
         self.attach_mouth = attach_mouth
         self.frame_end = frame_end
         self.perso = perso
+        self.display_attach = display_attach
         self.initiateAttachBubble()
 
     #-------
@@ -144,7 +146,7 @@ class Bubble:
         shapes = np.zeros_like(frame, np.uint8)
 
         #Draw the tail of the bubble
-        if draw_tail:
+        if self.display_attach:
             #it is the intersection of the triangle (mouth-attach_bubble[0]-attach_bubble[1]) and one of the sides of the rectangle
             self.initiateAttachBubble()
             attach_points = np.array([self.attach_bubble[0], self.attach_bubble[1], self.attach_mouth])

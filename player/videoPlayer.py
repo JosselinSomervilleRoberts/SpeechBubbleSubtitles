@@ -30,6 +30,8 @@ import player.video as video
 
 
 
+
+
 class DummyTask:
     def __init__(self, data):
         self.data = data
@@ -62,6 +64,7 @@ class VideoPlayer:
         self.pool = ThreadPool(processes = self.nb_of_threads)
         self.pending = deque()
         self.processing = deque()
+        
         
         # Metrics
         self.time_stamps_for_fps = []

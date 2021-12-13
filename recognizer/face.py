@@ -139,6 +139,9 @@ class Face:
         
         return False
     
+
+    def isSpeaking(self, frame_index):
+        return self.landmarks.speaking.get(frame_index, average_nb = 21) > 0.15
     
     
     def draw(self, frame, frame_index):
