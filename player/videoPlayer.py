@@ -73,6 +73,7 @@ class VideoPlayer:
         
         # Used to display the frames
         self.playing = False
+        self.pause = False
         self.draw_function = None
         self.time_last_frame = -1
         
@@ -116,7 +117,7 @@ class VideoPlayer:
                 self.time_last_frame = clock()
             
             # Si la frame est dispo et qu'on a suffisament attendu, on l'affiche
-            if len(self.pending) > 0 and self.pending[0].ready():
+            if len(self.pending) > 0 and self.pending[0].ready() and not(self.pause):
                 if self.playing and (clock() - self.time_last_frame) * self.fps > 1:
                     
                     # Pour mesurer le FPS réel
@@ -155,6 +156,8 @@ class VideoPlayer:
                 frame_index_processed += 1
                 
             ch = cv.waitKey(1)
+            if ch == ord("p"):
+                self.pause = not(self.pause)
             if ch == ord(' '):
                 self.threaded_mode = not self.threaded_mode
             if ch == 27:

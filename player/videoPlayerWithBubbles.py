@@ -61,6 +61,7 @@ class VideoPlayerWithBubbles(VideoPlayer):
         # Display option
         self.show_mesh = False
         self.show_outline = True
+        self.show_faces = True
         
         # General frame infos
         self.frame_width = None
@@ -218,7 +219,11 @@ class VideoPlayerWithBubbles(VideoPlayer):
 
         w = 0.4
         h = 0.25
+        #print(boxes)
         subtitle["attach"] = (len(self.faces) > 0)
+        if len(self.subtitles) > 0 and self.subtitles[-1]["end"] > start:
+            boxes.append((self.subtitles[-1]["pos"][0] - w/2., self.subtitles[-1]["pos"][1] - h/2., self.subtitles[-1]["pos"][0] + w/2., self.subtitles[-1]["pos"][1] + h/2.))
+            pass#head_box.append
         #display_results(mouth_pos, head_box, boxes, w, h, int(self.frame_width / 4.), int(self.frame_height / 4.))
         pos = find_optimal_pos(mouth_pos, head_box, boxes, w, h, self.frame_width_reduced, self.frame_height_reduced)
         subtitle["pos"] = pos
@@ -342,7 +347,7 @@ class VideoPlayerWithBubbles(VideoPlayer):
             removed = False
 
             if face.isPresent(self.current_frame_index):
-                face.draw(self.current_frame, self.current_frame_index)
+                if self.show_faces: face.draw(self.current_frame, self.current_frame_index)
                 if not(face.name is None): perso_pos[face.name.lower()] = face.getMouthPos(self.current_frame_index)
             else:
                 if self.current_frame_index > face.last_appearance: # La tete n'apparaitra plus
@@ -362,6 +367,8 @@ class VideoPlayerWithBubbles(VideoPlayer):
                 bubble.perso = "santiago"
             if bubble.perso == "kevin" and not(bubble.perso in perso_pos):
                 bubble.perso = "diaz"
+            if bubble.perso == "diaz" and not(bubble.perso in perso_pos):
+                bubble.perso = "kevin"
             if bubble.perso is None or len(bubble.perso) == 0 or not(bubble.perso in perso_pos):
                 # TODO: Change to search for perso speaking without names
                 found = False
@@ -372,6 +379,8 @@ class VideoPlayerWithBubbles(VideoPlayer):
                 if not(found):
                     new_pos = (0,0)
                     bubble.display_attach = False
+                    #if len(self.faces) > 0:
+                    #    new_pos = face.getMouthPos(self.current_frame_index)
             else:
                 new_pos = perso_pos[bubble.perso]
                 if new_pos[0] < 0: new_pos = (0,100)
