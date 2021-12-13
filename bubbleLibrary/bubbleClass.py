@@ -36,25 +36,25 @@ class Bubble:
         b_down = center_down[1] - a_down*center_down[0]
         #compute the x coordinate on an edge of the rectangle depending on the mouth's position
         if self.attach_mouth[0] < self.center[0] - self.width/2.: # left edge
-            print(" left")
+            #print(" left")
             x_up = self.center[0] - self.width/2.
             y_up = a_up*x_up + b_up
             x_down = self.center[0] - self.width/2.
             y_down = a_down*x_down + b_down 
         elif self.attach_mouth[0] > self.center[0] + self.width/2.: # right edge
-            print(" right")      
+            #print(" right")      
             x_up = self.center[0] + self.width/2.
             y_up = a_up*x_up + b_up
             x_down = self.center[0] + self.width/2.
             y_down = a_down*x_down + b_down 
         elif self.attach_mouth[1] > self.center[1]: # bottom edge
-            print(" bottom")
+            #print(" bottom")
             y_up = self.center[1] + self.height/2.
             x_up = (y_up - b_up) / a_up
             y_down = self.center[1] + self.height/2.
             x_down = (y_down - b_down) / a_down
         else: #upper edge
-            print(" up")
+            #print(" up")
             y_up = self.center[1] - self.height/2.
             x_up = (y_up - b_up) / a_up
             y_down = self.center[1] - self.height/2.
@@ -108,10 +108,9 @@ class Bubble:
             #Determine the bubble's optimal area
             #-----------------------------------
     
-    def estimateOptimalBubbleArea(self):
+    def estimateOptimalBubbleArea(self, bubble_width = 200):
         #find a good area for the bubble depending on the text
-        #we take the approximate area that would be necessary to fit the text into a bubble of width = 200 and add a 25% margin
-        bubble_width = 200
+        #we take the approximate area that would be necessary to fit the text into a bubble of width bubble_width and add a 25% margin
         text_size = cv2.getTextSize(self.lines, fontFace = cv2.FONT_HERSHEY_SIMPLEX, fontScale = self.font_scale, thickness = 2)[0]
         nb_lines = text_size[0] // bubble_width + 1
         bubble_height = 2 * text_size[1] * nb_lines
@@ -144,6 +143,15 @@ class Bubble:
         
         shapes = np.zeros_like(frame, np.uint8)
 
+        #Draw the tail of the bubble
+        if draw_tail:
+            #it is the intersection of the triangle (mouth-attach_bubble[0]-attach_bubble[1]) and one of the sides of the rectangle
+            self.initiateAttachBubble()
+            attach_points = np.array([self.attach_bubble[0], self.attach_bubble[1], self.attach_mouth])
+
+            cv2.drawContours(shapes, [attach_points], 0, fill_color, -1)
+            cv2.drawContours(shapes, [attach_points], 0, outline_color, thickness)
+
         #Draw the rectangle for the bubble
         rounded_rectangle(shapes,
         top_left,
@@ -153,16 +161,6 @@ class Bubble:
         fill_color = fill_color,
         thickness = thickness,
         line_type = line_type)
-
-
-        #Draw the tail of the bubble
-        if draw_tail:
-            #it is the intersection of the triangle (mouth-attach_bubble[0]-attach_bubble[1]) and one of the sides of the rectangle
-            self.initiateAttachBubble()
-            attach_points = np.array([self.attach_bubble[0], self.attach_bubble[1], self.attach_mouth])
-
-            cv2.drawContours(shapes, [attach_points], 0, fill_color, -1)
-            cv2.drawContours(shapes, [attach_points], 0, outline_color, thickness)
 
         #Add the bubble to the frame
         alpha = 0.5

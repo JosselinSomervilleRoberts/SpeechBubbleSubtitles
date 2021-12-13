@@ -317,7 +317,7 @@ class VideoPlayerWithBubbles(VideoPlayer):
             bubble = bubbleClass.Bubble()
             bubble.initiate(pos_bubble, width, height, lines, pos_mouth, frame_end)
 
-            area = bubble.estimateOptimalBubbleArea()
+            area = bubble.estimateOptimalBubbleArea(width)
             bubble.setWidthAndHeight(width, area / width)
 
             self.bubbles.append(bubble)
@@ -350,14 +350,15 @@ class VideoPlayerWithBubbles(VideoPlayer):
                 # TODO: Change to search for perso speaking without names
                 if len(self.faces) > 0:
                     new_pos = self.faces[0].getMouthPos(self.current_frame_index)
+                else:
+                    new_pos = (0, 100) #default
             else:
                 new_pos = perso_pos[bubble.perso]
                 if new_pos[0] < 0: new_pos = (0,100)
-            draw_tail = new_pos[0] >= 0 #if mouth wasn't found (ie pos < 0), we don't want to draw the tail of the bubble
+            draw_tail = new_pos[0] > 0 #if mouth wasn't found (ie pos <= 0), we don't want to draw the tail of the bubble
 
                 # print("Pos jake =", new_pos)
             bubble.setAttachMouth(new_pos)
-            bubble.draw(self.current_frame, new_pos)
             bubble.draw(self.current_frame, draw_tail = draw_tail)
 
         # Clean old bubbles

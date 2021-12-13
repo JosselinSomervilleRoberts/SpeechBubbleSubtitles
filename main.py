@@ -4,6 +4,7 @@ from player import VideoPlayerWithBubbles as Player
 
 # test
 if __name__ == '__main__':
+    #vid_play = Player("data/video99.mp4", "data/video99.ass", "data/faces")
     vid_play = Player("data/video.mp4", "data/video.ass", "data/faces")
     vid_play.play()
 
