@@ -1,6 +1,9 @@
 # SpeechBubbleSubtitles
-The project aims to generate speech bubble automatically on a video only using the video and a subtitles file.
+The project aims to generate speech bubbles automatically on a video only using the video and a subtitles file.
 
+To learn more about the project and see images of the result, please visit: https://josselinsomervilleroberts.github.io/
+
+![image](https://github.com/JosselinSomervilleRoberts/JosselinSomervilleRoberts.github.io/blob/main/images/projects/speech_bubbles/display.png)
 
 ## Installation
 
